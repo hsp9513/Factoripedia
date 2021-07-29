@@ -20,7 +20,7 @@ function reset_proto()
 end
 
 function enable_item_by_products(products,source)
-  dbg("enable_item_by_products"..source.name..source.type,true)
+  dbg("enable_item_by_products"..source.name..source.type,false)
   products = products or {}
   source = source or {name="nil",type="nil"}
   for _,product in pairs(products) do
@@ -207,6 +207,7 @@ function get_recipe_category_proto()
 end
 
 function get_modules()
+  dbg("get_modules",true)
   if not global.modules then
     global.modules={}
     local modules=global.modules
@@ -246,6 +247,7 @@ function get_modules()
 end
 
 function get_groups()
+  dbg("get_groups",true)
   if not global.groups then
     global.groups={}
     for _,group in pairs(game.item_group_prototypes) do
@@ -258,6 +260,11 @@ function get_groups()
     for _,recipe in pairs(get_recipe_proto()) do
       local lua_recipe=game.recipe_prototypes[recipe.name]
       global.groups[lua_recipe.group.name][lua_recipe.subgroup.name].recipes[recipe.name]=true
+    end
+
+    for _,item in pairs(get_item_proto()) do
+      local lua_item=game.item_prototypes[item.name]
+      global.groups[lua_item.group.name][lua_item.subgroup.name].items[item.name]=true
     end
   end
   return global.groups
