@@ -5,6 +5,7 @@ local pre_='factoripedia_'
 function dbg(str,b)
   b = b or false
   if false and b then
+  -- if b then
     game.print(str)
   end
 end
@@ -22,6 +23,7 @@ function SI(value)
 end
 
 function colorText(color,text)
+  color = color or {r=1, g=1, b=1}
   return {"",'[color='..color.r..','..color.g..','..color.b..']',text,'[/color]'}
 end
 
@@ -30,6 +32,31 @@ function setStyle(element, styles)
     element.style[k]=v
   end
   return element
+end
+
+function makeProductInfo(localised_name, probability, amount, min, max)
+  probability = probability~=nil and probability or 1
+  local description = {""}
+  table.insert(description,"[font=default-bold]")
+  if probability~=1 then table.insert(description, (probability*100).."% ") end
+
+  local avg
+  if amount or (min==max) then 
+    avg = amount or min 
+    if not (probability~=1 and avg==1) then
+      table.insert(description,avg.." × ")
+    end
+  else                         
+    avg = (max + min)/2 
+    table.insert(description,min.."-"..max.." × ")
+  end
+
+  if probability then avg = avg * probability end
+
+  table.insert(description,"[/font]")
+  table.insert(description, localised_name)
+
+  return {description=description, avg=avg}
 end
 
 function set_gui(player_index,key,gui)

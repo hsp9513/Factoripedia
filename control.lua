@@ -69,11 +69,19 @@ script.on_event(defines.events.on_gui_click,function (event)
       
     if event.element[pre..'fnei_item'] then
       if script.active_mods.FNEI then
-        remote.call("fnei", "show_recipe_for_prot", "craft", "item", event.element.children[1].caption)
+        if event.button == defines.mouse_button_type.left then
+          remote.call("fnei", "show_recipe_for_prot", "craft", "item", event.element.children[1].caption)
+        else
+          remote.call("fnei", "show_recipe_for_prot", "usage", "item", event.element.children[1].caption)
+        end
       end      
     elseif event.element[pre..'fnei_fluid'] then
       if script.active_mods.FNEI then
-        remote.call("fnei", "show_recipe_for_prot", "craft", "fluid", event.element.children[1].caption)
+        if event.button == defines.mouse_button_type.left then
+          remote.call("fnei", "show_recipe_for_prot", "craft", "fluid", event.element.children[1].caption)
+        else
+          remote.call("fnei", "show_recipe_for_prot", "usage", "fluid", event.element.children[1].caption)
+        end
       end      
     end
   end)

@@ -1,13 +1,13 @@
 {
 	"name": "factoripedia",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"title": "Factoripedia",
 	"author": "hsp9513",
 	"dependencies": [
     		"base >= 1.1.0",
 		"informatron >= 0.2.1"
 	],
-	"description": "This mod is currently under development.\n\nImplemented features\n1. Filtering on availability of module by recipe\n2. Information about item stack\n3. Information about fuels\n4. Information about resources\n5. Information about tiles\n\nFunction to be implemented\n1. Information about players",
+	"description": "This mod is currently under development.\n\nImplemented features\n1. Filtering on availability of module by recipe\n2. Information about items stack\n3. Information about fuels, resources, tiles, collections, and enemys\n\nFunction to be implemented\n1. Information about players",
 	"factorio_version": "1.1",
 	"homepage":""
 }
