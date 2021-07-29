@@ -272,12 +272,12 @@ function fuel_page(page_name, player_index, element)
 
       temp=temp.add{type='flow'}
       temp.ignored_by_interaction=true
-      setStyle(temp.add{type='label',caption={"","[img=fluid/"..lua_fluid.name.."]",lua_fluid.localised_name}},{width=200,horizontal_align='left'  })
-      setStyle(temp.add{type='label',caption=SI(lua_fluid.fuel_value)..'J '}                                  ,{width=100,horizontal_align='center'})
-      setStyle(temp.add{type='label',caption='fluid'}                                                         ,{width=150,horizontal_align='center'})
-      setStyle(temp.add{type='label',caption=(lua_fluid.emissions_multiplier*100)..'%'}                       ,{width=100,horizontal_align='center'})
-      setStyle(temp.add{type='label',caption='N/A'}                                                           ,{width=100,horizontal_align='center'})
-      setStyle(temp.add{type='label',caption='N/A'}                                                           ,{width=100,horizontal_align='center'})
+      setStyle(temp.add{type='label',caption={"","[img=fluid/"..lua_fluid.name.."] ",lua_fluid.localised_name}},{width=200,horizontal_align='left'  })
+      setStyle(temp.add{type='label',caption=SI(lua_fluid.fuel_value)..'J '}                                   ,{width=100,horizontal_align='center'})
+      setStyle(temp.add{type='label',caption='fluid'}                                                          ,{width=150,horizontal_align='center'})
+      setStyle(temp.add{type='label',caption=(lua_fluid.emissions_multiplier*100)..'%'}                        ,{width=100,horizontal_align='center'})
+      setStyle(temp.add{type='label',caption='N/A'}                                                            ,{width=100,horizontal_align='center'})
+      setStyle(temp.add{type='label',caption='N/A'}                                                            ,{width=100,horizontal_align='center'})
     end
   end
 end
