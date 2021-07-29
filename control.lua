@@ -59,13 +59,22 @@ script.on_event(defines.events.on_gui_click,function (event)
 
       renderFilteredItem(event.player_index)
     end
-    if event.element.parent and event.element.parent.parent and event.element.parent.parent.name==pre..'item_flow' then
-      --game.print(event.element.__name__.caption)
-      if script.active_mods.FNEI then
-        --remote.call("fnei", "show_recipe_for_prot", "craft", "item", event.element.caption)
-        remote.call("fnei", "show_recipe_for_prot", "craft", "item", event.element.__name__.caption)
-      end
+    -- if event.element.parent and event.element.parent.parent and event.element.parent.parent.name==pre..'item_flow' then
+    --   --game.print(event.element.__name__.caption)
+    --   if script.active_mods.FNEI then
+    --     --remote.call("fnei", "show_recipe_for_prot", "craft", "item", event.element.caption)
+    --     remote.call("fnei", "show_recipe_for_prot", "craft", "item", event.element.__name__.caption)
+    --   end
+    -- end
       
+    if event.element[pre..'fnei_item'] then
+      if script.active_mods.FNEI then
+        remote.call("fnei", "show_recipe_for_prot", "craft", "item", event.element.children[1].caption)
+      end      
+    elseif event.element[pre..'fnei_fluid'] then
+      if script.active_mods.FNEI then
+        remote.call("fnei", "show_recipe_for_prot", "craft", "fluid", event.element.children[1].caption)
+      end      
     end
   end)
   if not success then

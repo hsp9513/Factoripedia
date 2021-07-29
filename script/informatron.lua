@@ -18,6 +18,7 @@ function factoripedia_menu(player_index)
     -- tech=1,
     fuel=1,
     resource=1,
+    tile=1,
   }
 end
 
@@ -42,6 +43,9 @@ function factoripedia_page_content(page_name, player_index, element)
     end
     if page_name == 'resource' then
       resource_page(page_name, player_index, element)
+    end
+    if page_name == 'tile' then
+      tile_page(page_name, player_index, element)
     end
   end)
   if not success then
@@ -115,7 +119,8 @@ function renderFilteredItem(player_index)
         item_button=subgroup_table.add{type='sprite-button',sprite='item/'..item.name,number=lua_item.stack_size}
         item_button.tooltip={"","[img=item/"..lua_item.name.."] ",lua_item.localised_name,"\n",lua_item.name}
         
-        item_button.add{type="label",name="__name__",caption=item.name}.visible=false
+        -- item_button.add{type="label",name="__name__",caption=item.name}.visible=false
+        item_button.add{type='empty-widget',name=pre.."fnei_item",caption=lua_item.name} 
         --item_button.add{type="label",name="__stack__",caption=lua_item.stack_size}
       end
     end
@@ -254,6 +259,7 @@ function fuel_page(page_name, player_index, element)
       temp=fuel_flow.add{type='button',style='list_box_item'}
       temp.style.margin=-3
       temp.style.width=800
+      temp.add{type='empty-widget',name=pre.."fnei_item",caption=lua_item.name} 
 
       temp=temp.add{type='flow'}
       temp.ignored_by_interaction=true
@@ -262,7 +268,7 @@ function fuel_page(page_name, player_index, element)
       setStyle(temp.add{type='label',caption=lua_item.fuel_category}                                        ,{width=150,horizontal_align='center'})
       setStyle(temp.add{type='label',caption=(lua_item.fuel_emissions_multiplier*100)..'%'}                 ,{width=100,horizontal_align='center'})
       setStyle(temp.add{type='label',caption=(lua_item.fuel_acceleration_multiplier*100)..'%'}              ,{width=100,horizontal_align='center'})
-      setStyle(temp.add{type='label',caption=(lua_item.fuel_top_speed_multiplier*100)..'%'}                 ,{width=100,horizontal_align='center'})
+      setStyle(temp.add{type='label',caption=(lua_item.fuel_top_speed_multiplier*100)..'%'}                 ,{width=100,horizontal_align='center'})      
     end
   end
 
@@ -273,6 +279,7 @@ function fuel_page(page_name, player_index, element)
       temp=fuel_flow.add{type='button',style='list_box_item'}
       temp.style.margin=-3
       temp.style.width=800
+      temp.add{type='empty-widget',name=pre.."fnei_fluid",caption=lua_fluid.name} 
 
       temp=temp.add{type='flow'}
       temp.ignored_by_interaction=true
@@ -320,12 +327,15 @@ function resource_page(page_name, player_index, element)
       else amount = product.amount_max - product.amount_min
       end
       if(product.probability) then amount = amount * product.probability end
-      products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=amount, tooltip = {"",(product.type=="item" and game.item_prototypes[product.name] or game.fluid_prototypes[product.name]).localised_name," ",amount}}
+      local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=amount, tooltip = {"",(product.type=="item" and game.item_prototypes[product.name] or game.fluid_prototypes[product.name]).localised_name," ",amount}}
+      product_button.add{type='empty-widget',name=pre..(product.type=="item" and "fnei_item" or "fnei_fluid"),caption=product.name}       
     end
     local setting = surface.map_gen_settings.autoplace_controls[lua_entity.name]
     setStyle(resource_table.add{type='label',caption=(setting and setting.frequency~=0) and "O" or "X"},{horizontally_stretchable=true,horizontal_align='center'})
     if(lua_entity.mineable_properties.required_fluid ) then
-      setStyle(resource_table.add{type='sprite-button', sprite="fluid/"..lua_entity.mineable_properties.required_fluid, number=lua_entity.mineable_properties.fluid_amount,tooltip=game.fluid_prototypes[lua_entity.mineable_properties.required_fluid].localised_name },{horizontal_align='center'})
+      local mineable_properties = lua_entity.mineable_properties
+      local fluid_button = setStyle(resource_table.add{type='sprite-button', sprite="fluid/"..mineable_properties.required_fluid, number=mineable_properties.fluid_amount,tooltip=game.fluid_prototypes[mineable_properties.required_fluid].localised_name },{horizontal_align='center'})
+      fluid_button.add{type='empty-widget',name=pre.."fnei_fluid",caption=mineable_properties.required_fluid} 
     else
       resource_table.add{type='empty-widget'}
     end
@@ -335,5 +345,87 @@ function resource_page(page_name, player_index, element)
 
 
   -- resource_table.add{type='label',caption={pre.."resource_name"  }}
+
+end
+
+function tile_page(page_name, player_index, element)  
+  local items = get_item_proto()
+
+  local tile_flow = element.add{type='flow',name=pre..'tile_flow'}  
+
+  local tile_table = tile_flow.add{type='table',name=pre..'tile_table',column_count=8,draw_vertical_lines=false,draw_horizontal_lines=true,draw_horizontal_line_after_headers=true}  
+  tile_table.style.column_alignments[1] = "left"
+  tile_table.style.column_alignments[2] = "left"
+  tile_table.style.column_alignments[3] = "center"
+  tile_table.style.column_alignments[4] = "center"
+  tile_table.style.column_alignments[5] = "center"
+  tile_table.style.column_alignments[6] = "center"
+  tile_table.style.column_alignments[7] = "center"
+  tile_table.style.column_alignments[8] = "center"
+  setStyle(tile_table.add{type='label',caption=""                                                                           },{          horizontal_align='left'    })
+  setStyle(tile_table.add{type='label',caption={pre.."tile"               }                                                 },{width=120,horizontal_align='left'    })
+  setStyle(tile_table.add{type='label',caption={pre.."craftable"          },tooltip={pre.."craftable_description"          }},{width=100,horizontal_align='center'  })
+  setStyle(tile_table.add{type='label',caption={pre.."minable"            },tooltip={pre.."minable_description"            }},{width=100,horizontal_align='center'  })
+  setStyle(tile_table.add{type='label',caption={pre.."natural"            },tooltip={pre.."natural_description"            }},{width=100,horizontal_align='center'  })
+  setStyle(tile_table.add{type='label',caption={pre.."walking_speed"      }                                                 },{width=100,horizontal_align='center'  })
+  setStyle(tile_table.add{type='label',caption={pre.."vehicle_friction"   }                                                 },{width=100,horizontal_align='center'  })
+  setStyle(tile_table.add{type='label',caption={pre.."emission_absorption"},tooltip={pre.."emission_absorption_description"}},{width=120,horizontal_align='center'  })
+
+
+  for _,lua_tile in pairs(game.tile_prototypes) do
+    -- local lua_entity = game.entity_prototypes[resource]
+    -- setStyle(tile_table.add{type='choose-elem-button',elem_type='entity',entity=lua_entity.name},{}).locked=true
+    setStyle(tile_table.add{type='sprite-button', sprite='tile/'..lua_tile.name,tooltip=colorText(lua_tile.map_color,lua_tile.localised_name)},{})
+    
+    
+    -- setStyle(tile_table.add{type='label',caption={"",'[color='..lua_tile.map_color.r..","..lua_tile.map_color.g..","..lua_tile.map_color.b..']',lua_tile.localised_name,'[/color]'},tooltip=lua_tile.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
+    setStyle(tile_table.add{type='label',caption=lua_tile.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
+
+    local craftable = false
+    if lua_tile.items_to_place_this then
+      for _,item in pairs(lua_tile.items_to_place_this) do       
+        if items[item.name] then
+          -- setStyle(tile_table.add{type='label',caption=item.name},{horizontally_stretchable=true,horizontal_align='center'})
+          local cratable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=item.name,caption=item.name},{horizontally_stretchable=true,horizontal_align='center'})
+          cratable_button.locked=true
+          cratable_button.add{type='empty-widget',name=pre.."fnei_item",caption=item.name}          
+          craftable = true
+          break
+        end
+      end
+    end
+    if not craftable then
+      setStyle(tile_table.add{type='label',caption=""},{horizontally_stretchable=true,horizontal_align='center'})
+    end
+
+    if lua_tile.mineable_properties.minable then
+      local mineable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=lua_tile.mineable_properties.products[1].name,caption=""},{horizontally_stretchable=true,horizontal_align='center'})
+      mineable_button.locked=true
+      mineable_button.add{type='empty-widget',name=pre.."fnei_item",caption=lua_tile.mineable_properties.products[1].name}
+    else
+      setStyle(tile_table.add{type='label',caption=""},{horizontally_stretchable=true,horizontal_align='center'})
+    end
+    -- setStyle(tile_table.add{type='label',caption=lua_tile.mineable_properties.minable and "O" or "X"},{horizontally_stretchable=true,horizontal_align='center'})
+    
+    if lua_tile.autoplace_specification then
+      setStyle(tile_table.add{type='sprite-button', sprite='tile/'..lua_tile.name,tooltip=colorText(lua_tile.map_color,lua_tile.localised_name)},{})
+    else
+      setStyle(tile_table.add{type='label',caption=""},{horizontally_stretchable=true,horizontal_align='center'})
+    end
+    -- setStyle(tile_table.add{type='label',caption=lua_tile.autoplace_specification and "O" or "X"},{width=100,horizontal_align='center'})
+    
+    setStyle(tile_table.add{type='label',caption=(lua_tile.walking_speed_modifier*100)..'%'},{width=100,horizontal_align='center'})
+    setStyle(tile_table.add{type='label',caption=(lua_tile.vehicle_friction_modifier*100)..'%'},{width=100,horizontal_align='center'})
+    -- setStyle(tile_table.add{type='label',caption=(lua_tile.emissions_per_second*60)..'/min'},{width=100,horizontal_align='center'})
+    setStyle(tile_table.add{type='label',caption=(lua_tile.emissions_per_second*1000000*60)},{width=100,horizontal_align='center'})
+    -- setStyle(tile_table.add{type='label',caption=(lua_tile.map_color.r..","..lua_tile.map_color.g..","..lua_tile.map_color.b)},{width=100,horizontal_align='center'})
+    -- setStyle(tile_table.add{type='label',caption={"",'[color='..lua_tile.map_color.r..","..lua_tile.map_color.g..","..lua_tile.map_color.b..']',"■□",'[/color]'}},{horizontally_stretchable=true,horizontal_align='left'})
+
+
+  end
+  
+
+
+  -- tile_table.add{type='label',caption={pre.."resource_name"  }}
 
 end
