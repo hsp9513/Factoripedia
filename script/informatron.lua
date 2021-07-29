@@ -17,6 +17,7 @@ function factoripedia_menu(player_index)
     recipe=1,
     -- tech=1,
     fuel=1,
+    resource=1,
   }
 end
 
@@ -38,6 +39,9 @@ function factoripedia_page_content(page_name, player_index, element)
     end    
     if page_name == 'fuel' then
       fuel_page(page_name, player_index, element)
+    end
+    if page_name == 'resource' then
+      resource_page(page_name, player_index, element)
     end
   end)
   if not success then
@@ -280,4 +284,56 @@ function fuel_page(page_name, player_index, element)
       setStyle(temp.add{type='label',caption='N/A'}                                                            ,{width=100,horizontal_align='center'})
     end
   end
+end
+
+function resource_page(page_name, player_index, element)  
+  get_item_proto()
+  local surface = game.surfaces[1]
+
+  local resource_flow = element.add{type='flow',name=pre..'resource_flow'}  
+
+  local resource_table = resource_flow.add{type='table',name=pre..'resource_table',column_count=7,draw_vertical_lines=false,draw_horizontal_lines=true,draw_horizontal_line_after_headers=true}  
+  resource_table.style.column_alignments[1] = "left"
+  resource_table.style.column_alignments[2] = "left"
+  resource_table.style.column_alignments[3] = "center"
+  resource_table.style.column_alignments[4] = "center"
+  resource_table.style.column_alignments[5] = "center"
+  resource_table.style.column_alignments[6] = "center"
+  resource_table.style.column_alignments[7] = "center"
+  setStyle(resource_table.add{type='label',caption=""                     },{          horizontal_align='left'    })
+  setStyle(resource_table.add{type='label',caption={pre.."resource"      }},{width=100,horizontal_align='left'    })
+  setStyle(resource_table.add{type='label',caption={pre.."mining_time"   }},{width=100,horizontal_align='center'  })
+  setStyle(resource_table.add{type='label',caption={pre.."products"      }},{width=100,horizontal_align='center'  })
+  setStyle(resource_table.add{type='label',caption=surface.name           },{width=100,horizontal_align='center'  })
+  setStyle(resource_table.add{type='label',caption={pre.."required_fluid"}},{width=100,horizontal_align='center'  })
+  setStyle(resource_table.add{type='label',caption={pre.."infinity"      }},{width=100,horizontal_align='center'  })
+
+  for resource,_ in pairs(global.item_special_type['resource']) do
+    local lua_entity = game.entity_prototypes[resource]
+    setStyle(resource_table.add{type='choose-elem-button',elem_type='entity',entity=lua_entity.name},{}).locked=true
+    setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
+    setStyle(resource_table.add{type='label',caption=lua_entity.mineable_properties.mining_time},{horizontally_stretchable=true,horizontal_align='center'})
+    local products_flow = setStyle(resource_table.add{type='flow'},{horizontally_stretchable=true,horizontal_align='center'})
+    for _,product in pairs(lua_entity.mineable_properties.products) do
+      local amount
+      if(product.amount) then amount = product.amount
+      else amount = product.amount_max - product.amount_min
+      end
+      if(product.probability) then amount = amount * product.probability end
+      products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=amount, tooltip = {"",(product.type=="item" and game.item_prototypes[product.name] or game.fluid_prototypes[product.name]).localised_name," ",amount}}
+    end
+    local setting = surface.map_gen_settings.autoplace_controls[lua_entity.name]
+    setStyle(resource_table.add{type='label',caption=(setting and setting.frequency~=0) and "O" or "X"},{horizontally_stretchable=true,horizontal_align='center'})
+    if(lua_entity.mineable_properties.required_fluid ) then
+      setStyle(resource_table.add{type='sprite-button', sprite="fluid/"..lua_entity.mineable_properties.required_fluid, number=lua_entity.mineable_properties.fluid_amount,tooltip=game.fluid_prototypes[lua_entity.mineable_properties.required_fluid].localised_name },{horizontal_align='center'})
+    else
+      resource_table.add{type='empty-widget'}
+    end
+    setStyle(resource_table.add{type='label',caption=lua_entity.infinite_resource and "O" or "X"},{horizontally_stretchable=true,horizontal_align='center'})
+  end
+  
+
+
+  -- resource_table.add{type='label',caption={pre.."resource_name"  }}
+
 end
