@@ -405,10 +405,16 @@ function tile_page(page_name, player_index, element)
       setStyle(tile_table.add{type='label',caption=""},{horizontally_stretchable=true,horizontal_align='center'})
     end
 
-    if lua_tile.mineable_properties.minable then
-      local mineable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=lua_tile.mineable_properties.products[1].name,caption=""},{horizontally_stretchable=true,horizontal_align='center'})
-      mineable_button.locked=true
-      mineable_button.add{type='empty-widget',name=pre.."fnei_item",caption=lua_tile.mineable_properties.products[1].name}
+    if lua_tile.mineable_properties.minable then      
+      local product = (lua_tile.mineable_properties.products or {})[1] 
+      if product then
+        local mineable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=product.name,caption=""},{horizontally_stretchable=true,horizontal_align='center'})
+        mineable_button.locked=true
+        mineable_button.add{type='empty-widget',name=pre.."fnei_item",caption=product.name}
+      else        
+        local mineable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",tooltip={pre.."tile_without_product"}},{horizontally_stretchable=true,horizontal_align='center'})
+        mineable_button.locked=true
+      end
     else
       setStyle(tile_table.add{type='label',caption=""},{horizontally_stretchable=true,horizontal_align='center'})
     end
