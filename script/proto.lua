@@ -17,6 +17,7 @@ function reset_proto()
   global.craftring_machines = {}
   global.modules = nil
   global.groups = nil
+  global.recipe_groups = nil
 end
 
 function enable_item_by_products(products,source)
@@ -213,6 +214,15 @@ function get_modules()
     local modules=global.modules
     local items = get_item_proto()
 
+    function add_module_tooltip(tooltip,lua_item)
+      local effects = lua_item.module_effects
+      local effects_tooltip = {"","  "}
+      for k,v in pairs(effects) do
+        table.insert(effects_tooltip, {""," ",{"description."..k.."-bonus"}," "..sign(round(v.bonus*100)).."%"})
+      end
+      table.insert(tooltip,{"","\n","[img=item/"..lua_item.name.."]",lua_item.localised_name,effects_tooltip})
+    end
+
     for _,item in pairs(items) do
       local lua_item = game.item_prototypes[item.name]
       if lua_item.type=='module' then
@@ -222,8 +232,10 @@ function get_modules()
             key=module_key,
             localised_name=lua_item.localised_name,
             icon=lua_item.name,
+            tooltip = {"","Module list"},--TODO
             enabled=false
           }
+          add_module_tooltip(modules[module_key].tooltip, lua_item)
           local limitations=lua_item.limitations
           if #limitations>0 then
             modules[module_key].enabled=true
@@ -237,6 +249,7 @@ function get_modules()
         else
           -- modules[module_key].localised_name=lua_item.localised_name
           modules[module_key].icon=item.name    
+          add_module_tooltip(modules[module_key].tooltip, lua_item)
         end
 
       end
@@ -268,4 +281,30 @@ function get_groups()
     end
   end
   return global.groups
+end
+
+function get_recipe_groups()
+  if not global.recipe_groups then
+    -- Make gorup table
+    global.recipe_groups={}
+    local recipe_groups = global.recipe_groups
+    for _,group in pairs(game.item_group_prototypes) do
+      global.recipe_groups[group.name]=true
+      -- game.print(group.name)
+    end
+
+    local valid_group = {}
+    for _,recipe in pairs(get_recipe_proto()) do
+      local lua_recipe = game.recipe_prototypes[recipe.name]
+      valid_group[lua_recipe.group.name] = true
+      -- game.print(lua_recipe.group.name)
+    end
+
+    for group,_ in pairs(recipe_groups) do
+      if valid_group[group] ==nil then
+        recipe_groups[group]=nil
+      end
+    end   
+  end
+  return global.recipe_groups
 end

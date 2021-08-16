@@ -1,0 +1,83 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.0.8
+Date: 2021-08-16
+  Changes:
+    - (Recipe tab) Performance optimization
+    - (Recipe tab) Filter option added
+    - (Recipe tab) Module brief information added
+    - (Fuel tab) Layout changed
+    - (Fuel tab) Fuel category sorting
+    - (Fuel tab) Burnt result
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.7
+Date: 2021-08-05
+  Bugfixes:
+    - (Tile tab) A bug that occurs when tiles can be mined but there are no product.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.6
+Date: 2021-07-30
+  Changes:
+    - Collection tab added
+    - (Collection tab) Category(tree, fish, or simple-entity)
+    - (Collection tab) Mining time
+    - (Collection tab) Health
+    - (Collection tab) Products
+    - (Collection tab) Emission absortion(tree only)
+    - Enemy tab added
+    - (Enemy tab) Category(unit, turret, or unit-spawner)
+    - (Enemy tab) Health
+    - (Enemy tab) Loots
+    - (Enemy tab) Resistance
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 2021-07-07
+  Changes:
+    - Tile tab added
+    - (Tile tab) Craftable tile
+    - (Tile tab) Minable tile
+    - (Tile tab) Natural tile
+    - (Tile tab) Speed bonus
+    - (Tile tab) Vehicle friction
+    - (Tile tab) Emission absortion
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.4
+Date: 2021-05-22
+  Changes:
+    - Resource tab added
+    - (Resource tab) Mining time
+    - (Resource tab) Products
+    - (Resource tab) Nauvis spawn
+    - (Resource tab) Required fluid
+    - (Resource tab) Infinity resource
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 2021-05-05
+  Bugfixes:
+    - typo
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.2
+Date: 2021-05-05
+  Changes:
+    - Item tab added
+    - (Item tab) stack
+    - Fuel tab added
+    - (Fuel tab) Calorie
+    - (Fuel tab) Fuel category
+    - (Fuel tab) Emission
+    - (Fuel tab) Accelation bonus
+    - (Fuel tab) Top speed bonus
+
+
+---------------------------------------------------------------------------------------------------
+Version: 0.0.1
+Date: 2021-02-02
+  Changes:
+    - First version
+    - Recipe tab added
+    - (Recipe tab) Module filter

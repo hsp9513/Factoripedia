@@ -14,6 +14,14 @@ function toFixed(value,n)
   return math.floor(value*(10^n))/10^n
 end
 
+function round(value)
+  return math.floor(value+0.5)
+end
+
+function sign(value)
+  return value>0 and "+"..value or value
+end
+
 function SI(value) 
   if     value>=1000000000 then return toFixed(value/1000000000,2)..' G'
   elseif value>=1000000    then return toFixed(value/1000000   ,2)..' M'
