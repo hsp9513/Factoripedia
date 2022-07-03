@@ -74,7 +74,7 @@ script.on_event(defines.events.on_gui_click,function (event)
 
     -- FNEI recipe remote call
     if event.element.tags[pre.."FNEI"] then
-      game.print(event.element.name)
+      --game.print(event.element.name)
       if script.active_mods.FNEI then
         if event.element.type=="choose-elem-button" then
           if event.button == defines.mouse_button_type.left then
