@@ -72,7 +72,7 @@ script.on_event(defines.events.on_gui_click,function (event)
       renderFilteredItem(event.player_index)
     end
 
-    -- FNEI recipe remote call
+    -- FNEI recipe remote call(show_recipe_for_prot)
     if event.element.tags[pre.."FNEI"] then
       --game.print(event.element.name)
       if script.active_mods.FNEI then
@@ -88,6 +88,14 @@ script.on_event(defines.events.on_gui_click,function (event)
           else
             remote.call("fnei", "show_recipe_for_prot", "usage", event.element.tags[pre.."FNEI"].type, event.element.tags[pre.."FNEI"].value)
           end
+        end
+      end
+    -- FNEI recipe remote call(show_recipe)
+    elseif event.element.tags[pre.."FNEI_recipe"] then
+      --game.print(event.element.name)
+      if script.active_mods.FNEI then
+        if event.element.type=="choose-elem-button" then
+          remote.call("fnei", "show_recipe", event.element.elem_value)
         end
       end
     end

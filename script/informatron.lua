@@ -268,11 +268,12 @@ function renderFilteredRecipe(player_index)
         local recipe_button
         if valid==true then
           recipe_button=subgroup_table.add{type='choose-elem-button',elem_type="recipe",recipe=recipe.name,style='yellow_slot_button'}
-          recipe_button.locked=true
           subgroup_valid=true
         else
           recipe_button=subgroup_table.add{type='choose-elem-button',elem_type="recipe",recipe=recipe.name}
         end
+        recipe_button.locked=true
+        recipe_button.tags={[pre.."FNEI_recipe"]=true}
       end
       if subgroup_valid==false and scope_state=='right' then
         subgroup_table.visible = false
