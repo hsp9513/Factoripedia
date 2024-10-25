@@ -5,7 +5,7 @@ local pre_='factoripedia_'
 function dbg(str,b)
   b = b or false
   if false and b then
-  -- if b then
+   --if b then
     game.print(str)
   end
 end
@@ -68,20 +68,20 @@ function makeProductInfo(localised_name, probability, amount, min, max)
 end
 
 function set_gui(player_index,key,gui)
-if not global.gui[player_index] then global.gui[player_index]={} end
-global.gui[player_index][key]=gui
+if not storage.gui[player_index] then storage.gui[player_index]={} end
+storage.gui[player_index][key]=gui
 end
 
 function get_gui(player_index,key)
-    return global.gui[player_index] and global.gui[player_index][key]
+    return storage.gui[player_index] and storage.gui[player_index][key]
 end
 
 function set_localised_string(player_index,key,localised_string)
-    if not global.localised_string[player_index] then global.localised_string[player_index]={} end
-    global.localised_string[player_index][key]=localised_string
+    if not storage.localised_string[player_index] then storage.localised_string[player_index]={} end
+    storage.localised_string[player_index][key]=localised_string
 end
 
 function get_localised_string(player_index,key)
-  return global.localised_string[player_index] and global.localised_string[player_index][key]
+  return storage.localised_string[player_index] and storage.localised_string[player_index][key]
 end
 

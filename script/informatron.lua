@@ -21,6 +21,7 @@ function factoripedia_menu(player_index)
     tile=1,
     collection=1,
     enemy=1,
+    spoil=1,
   }
 end
 
@@ -55,6 +56,9 @@ function factoripedia_page_content(page_name, player_index, element)
     if page_name == 'enemy' then
       enemy_page(page_name, player_index, element)
     end
+    if page_name == 'spoil' then
+      spoil_page(page_name, player_index, element)
+    end
   end)
   if not success then
     reset()
@@ -67,18 +71,21 @@ function item_page(page_name, player_index, element)
   -- Make gorup table
   local valid_group = {}
   for _,item in pairs(get_item_proto()) do
-    local lua_item = game.item_prototypes[item.name]
+    local lua_item = prototypes.item[item.name]
     valid_group[lua_item.group.name] = true
   end
-  local group_table = element.add{type='table',name=pre..'item_group_table',style='filter_group_table',column_count=12}
+  --local group_table = element.add{type='table',name=pre..'item_group_table',style='filter_group_table',column_count=12}
+  local group_table = element.add{type='table',name=pre..'item_group_table',column_count=12}
   set_gui(player_index,pre..'item_group_table',group_table)
   group_table.add{type="label",name="__target__",caption=""}.visible=false
   do          
-    for _,group in pairs(game.item_group_prototypes) do
+    for _,group in pairs(prototypes.item_group) do
       if valid_group[group.name] then
-        local group_button=group_table.add{type='sprite-button',name=group.name,sprite='item-group/'..group.name ,style='filter_group_button_tab',tooltip=group.localised_name}
+        local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
         -- group_button.add{type="checkbox",name="selected",state=false}.visible=false
-
+        setStyle(group_button,{ vertically_stretchable=false, horizontally_stretchable=false  })
+        group_button.add{type="sprite",sprite='item-group/'..group.name}
+        setStyle(group_button.add{type="sprite",sprite='item-group/'..group.name},{ vertically_stretchable=true, horizontally_stretchable=true  })
       end
     end      
   end
@@ -116,7 +123,7 @@ function renderFilteredItem(player_index)
       local subgroup_table = item_flow.add{type="table", name=subgroup_key,style='filter_slot_table',column_count=14}
       for item_key,_ in pairs(get_groups()[group_name][subgroup_key].items) do
         local item=get_item_proto()[item_key]
-        local lua_item=game.item_prototypes[item.name]
+        local lua_item=prototypes.item[item.name]
         --local valid=true
         --local valid=false
 
@@ -138,17 +145,19 @@ function recipe_page(page_name, player_index, element)
   -- Make gorup table
   -- local valid_group = {}
   -- for _,recipe in pairs(get_recipe_proto()) do
-  --   local lua_recipe = game.recipe_prototypes[recipe.name]
+  --   local lua_recipe = prototypes.recipe[recipe.name]
   --   valid_group[lua_recipe.group.name] = true
   -- end
-  local group_table = element.add{type='table',name=pre..'recipe_group_table',style='filter_group_table',column_count=12}
+  --local group_table = element.add{type='table',name=pre..'recipe_group_table',style='filter_group_table',column_count=12}
+  local group_table = element.add{type='table',name=pre..'recipe_group_table',column_count=12}
   set_gui(player_index,pre..'recipe_group_table',group_table)
   group_table.add{type="label",name="__target__",caption=""}.visible=false
   do          
     for groupkey,_ in pairs(get_recipe_groups()) do
-      local group = game.item_group_prototypes[groupkey]
-      local group_button=group_table.add{type='sprite-button',name=group.name,sprite='item-group/'..group.name ,style='filter_group_button_tab',tooltip=group.localised_name}
+      local group = prototypes.item_group[groupkey]
+      local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
       -- group_button.add{type="checkbox",name="selected",state=false}.visible=false
+         group_button.add{type="sprite",sprite='item-group/'..group.name}
 
     end      
   end
@@ -189,23 +198,23 @@ function recipe_page(page_name, player_index, element)
       local module_flow = option_scroll.add{type='flow',name=pre..'module_flow',direction='horizontal'}
       local module_table = module_flow.add{type='table',name=pre..'module_table', caption="Module List",style='filter_slot_table',column_count=2}
       set_gui(player_index,pre..'module_table',module_table)
-      for _,module in pairs(get_modules()) do
-        local module_label = module_table.add{type="label",name=module.key..'_label',caption="" }
-        local module_localised_string = get_localised_string(player_index,module.key)
-        if module_localised_string then 
-          module_label.caption={"","[img=item/"..module.icon.."]",module_localised_string}
-        else
-          game.players[player_index].request_translation({"",module.localised_name,{pre..'empty',module.key}})
-        end
+      --for _,module in pairs(get_modules()) do
+      for _,module_effect in pairs(get_module_effects()) do
+        local module_label = module_table.add{type="label",name=module_effect.key..'_label',caption="" }
+        --local module_localised_string = get_localised_string(player_index,module_effect.localised_name)
+        local module_localised_string = module_effect.localised_name
+        --module_label.caption={"","[img=item/"..module_effect.icon.."]",module_localised_string}
+        module_label.caption={"",module_localised_string}
 
-        module_label.tooltip=module.tooltip
-        if module.enabled then
+        module_label.tooltip=module_effect.tooltip
+        if module_effect.enabled then
           module_table.add{
-            type="switch",name=module.key,allow_none_state=true,switch_state="none",
-            left_label_caption=" on",right_label_caption="off"
+            type="switch",name=module_effect.key,allow_none_state=true,switch_state="none",
+            left_label_caption=" on",right_label_caption="off",
+            tags = {[pre.."renderFilteredRecipe"]=true}
           }
         else
-          module_table.add{type="label", name=module.key,caption="everything" ,tooltip={pre.."module_filter_everything"}} 
+          module_table.add{type="label", name=module_effect.key,caption="everything" ,tooltip={pre.."module_filter_everything"}} 
         end
         module_table.style.column_alignments[#module_table.children]='center'
       end
@@ -237,11 +246,11 @@ function renderFilteredRecipe(player_index)
 
   local scope_state = filter_table[pre.."scope_switch"].switch_state
   local module_table_state={}
-  for _,module in pairs(get_modules()) do
-    if module_table[module.key].type=='switch' then
-      module_table_state[module.key] = module_table[module.key].switch_state      
+  for _,module_effect in pairs(get_module_effects()) do
+    if module_table[module_effect.key].type=='switch' then
+      module_table_state[module_effect.key] = module_table[module_effect.key].switch_state      
     -- else
-    --   module_table_state[module.key] = nil
+    --   module_table_state[module_effect.key] = nil
     end
   end
 
@@ -252,15 +261,16 @@ function renderFilteredRecipe(player_index)
       local subgroup_table = recipe_flow.add{type="table", name=subgroup_key,style='filter_slot_table',column_count=14}
       for recipe_key,_ in pairs(get_groups()[group_name][subgroup_key].recipes) do
         local recipe=get_recipe_proto()[recipe_key]
-        local lua_recipe=game.recipe_prototypes[recipe.name]
+        --local lua_recipe=prototypes.recipe[recipe.name]
+        local lua_recipe=prototypes.recipe[recipe.name]
         local valid=true
-        for _,module in pairs(get_modules()) do
-          if module_table_state[module.key] ~=nil then
-            local state=module_table_state[module.key]
+        for _,module_effect in pairs(get_module_effects()) do
+          if module_table_state[module_effect.key] ~=nil then
+            local state=module_table_state[module_effect.key]
             if state=='left' then
-              if recipe.module_info[module.key]~=true then valid=false break end
+              if lua_recipe.allowed_effects[module_effect.key]~=true then valid=false break end
             elseif state=='right' then
-              if recipe.module_info[module.key]==true then valid=false break end
+              if lua_recipe.allowed_effects[module_effect.key]==true then valid=false break end
             end
           end
         end
@@ -303,7 +313,7 @@ end
 
 --   local items = get_item_proto()
 --   for _,item in pairs(items) do 
---     local lua_item = game.item_prototypes[item.name]
+--     local lua_item = prototypes.item[item.name]
 --     if lua_item.fuel_value>0 then 
 --       temp=fuel_flow.add{type='button',style='list_box_item'}
 --       temp.style.margin=-3
@@ -323,7 +333,7 @@ end
 
 --   local fluids = get_fluid_proto()  
 --   for _,fluid in pairs(fluids) do 
---     local lua_fluid = game.fluid_prototypes[fluid.name]
+--     local lua_fluid = prototypes.fluid[fluid.name]
 --     if lua_fluid.fuel_value>0 then
 --       temp=fuel_flow.add{type='button',style='list_box_item'}
 --       temp.style.margin=-3
@@ -367,7 +377,7 @@ function fuel_page(page_name, player_index, element)
 
   local items = get_item_proto()
   for _,item in pairs(items) do 
-    local lua_item = game.item_prototypes[item.name]
+    local lua_item = prototypes.item[item.name]
     if lua_item.fuel_value>0 then 
       if not fuel_item_category[lua_item.fuel_category] then
         fuel_item_category[lua_item.fuel_category] = {}
@@ -396,7 +406,7 @@ function fuel_page(page_name, player_index, element)
 
   local fluids = get_fluid_proto()  
   for _,fluid in pairs(fluids) do 
-    local lua_fluid = game.fluid_prototypes[fluid.name]
+    local lua_fluid = prototypes.fluid[fluid.name]
     if lua_fluid.fuel_value>0 then
       setStyle(fuel_table.add{type='choose-elem-button',elem_type='fluid',fluid=lua_fluid.name,tags={[pre.."FNEI"]=true}},{}).locked=true
     -- setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
@@ -429,12 +439,13 @@ function resource_page(page_name, player_index, element)
   setStyle(resource_table.add{type='label',caption={"gui-map-editor.resources"  }},{width=100,horizontal_align='left'    })
   setStyle(resource_table.add{type='label',caption={"description.mining-time"   }},{width=100,horizontal_align='center'  })
   setStyle(resource_table.add{type='label',caption={"description.products"      }},{width=100,horizontal_align='center'  })
-  setStyle(resource_table.add{type='label',caption=surface.name                  },{width=100,horizontal_align='center'  })
+  --setStyle(resource_table.add{type='label',caption=surface.name                  },{width=100,horizontal_align='center'  })
+  setStyle(resource_table.add{type='label',caption={"space-location-name.nauvis"}},{width=100,horizontal_align='center'  })
   setStyle(resource_table.add{type='label',caption={"description.required-fluid"}},{width=100,horizontal_align='center'  })
   setStyle(resource_table.add{type='label',caption={pre.."infinity"             }},{width=100,horizontal_align='center'  })
 
-  for resource,_ in pairs(global.item_special_type['resource']) do
-    local lua_entity = game.entity_prototypes[resource]
+  for resource,_ in pairs(storage.item_special_type['resource']) do
+    local lua_entity = prototypes.entity[resource]
     setStyle(resource_table.add{type='choose-elem-button',elem_type='entity',entity=lua_entity.name},{}).locked=true
     -- setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
     setStyle(resource_table.add{type='label',caption=lua_entity.localised_name,tooltip={"",lua_entity.localised_name,"\n",lua_entity.name}},{horizontally_stretchable=true,horizontal_align='left'})
@@ -443,10 +454,10 @@ function resource_page(page_name, player_index, element)
     local products_flow = setStyle(resource_table.add{type='flow'},{horizontally_stretchable=true,horizontal_align='center'})
     for _,product in pairs(lua_entity.mineable_properties.products) do
       local info = makeProductInfo(
-        (product.type=="item" and game.item_prototypes[product.name] or game.fluid_prototypes[product.name]).localised_name, 
+        (product.type=="item" and prototypes.item[product.name] or prototypes.fluid[product.name]).localised_name, 
         product.probability, product.amount, product.amount_min, product.amount_max
       )
-      -- local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=amount, tooltip = {"",(product.type=="item" and game.item_prototypes[product.name] or game.fluid_prototypes[product.name]).localised_name," ",amount}}
+      -- local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=amount, tooltip = {"",(product.type=="item" and prototypes.item[product.name] or prototypes.fluid[product.name]).localised_name," ",amount}}
       local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=info.avg, tooltip = info.description,
                                                tags={[pre.."FNEI"]={type=product.type,value=product.name}}}
     end
@@ -455,7 +466,7 @@ function resource_page(page_name, player_index, element)
     if(lua_entity.mineable_properties.required_fluid ) then
       local mineable_properties = lua_entity.mineable_properties
       local fluid_button = setStyle(resource_table.add{type='sprite-button', sprite="fluid/"..mineable_properties.required_fluid, number=mineable_properties.fluid_amount,
-                                                       tooltip=game.fluid_prototypes[mineable_properties.required_fluid].localised_name,tags={[pre.."FNEI"]={type="fluid",value=mineable_properties.required_fluid} }},
+                                                       tooltip=prototypes.fluid[mineable_properties.required_fluid].localised_name,tags={[pre.."FNEI"]={type="fluid",value=mineable_properties.required_fluid} }},
                                    {horizontal_align='center'})
     else
       resource_table.add{type='empty-widget'}
@@ -488,8 +499,8 @@ function tile_page(page_name, player_index, element)
   setStyle(tile_table.add{type='label',caption={pre.."emission_absorption" },tooltip={pre.."tile_emission_absorption_description"}},{width=120,horizontal_align='center'  })
 
 
-  for _,lua_tile in pairs(game.tile_prototypes) do
-    -- local lua_entity = game.entity_prototypes[resource]
+  for _,lua_tile in pairs(prototypes.tile) do
+    -- local lua_entity = prototypes.entity[resource]
     setStyle(tile_table.add{type='choose-elem-button',elem_type='tile',tile=lua_tile.name},{}).locked=true
     -- setStyle(tile_table.add{type='sprite-button', sprite='tile/'..lua_tile.name,tooltip=colorText(lua_tile.map_color,lua_tile.localised_name)},{})
     
@@ -539,7 +550,13 @@ function tile_page(page_name, player_index, element)
     setStyle(tile_table.add{type='label',caption=(lua_tile.walking_speed_modifier*100)..'%'},{width=100,horizontal_align='center'})
     setStyle(tile_table.add{type='label',caption=(lua_tile.vehicle_friction_modifier*100)..'%'},{width=100,horizontal_align='center'})
     -- setStyle(tile_table.add{type='label',caption=(lua_tile.emissions_per_second*60)..'/min'},{width=100,horizontal_align='center'})
-    setStyle(tile_table.add{type='label',caption=(lua_tile.emissions_per_second*1000000*60)},{width=100,horizontal_align='center'})
+    --setStyle(tile_table.add{type='label',caption=(lua_tile.emissions_per_second*1000000*60)},{width=100,horizontal_align='center'})
+    ----emissions_per_second->absorptions_per_second
+    local absorption_caption={""}
+    for pollution, absorb in pairs(lua_tile.absorptions_per_second) do
+        table.insert(absorption_caption,{"",{"airborne-pollutant-name."..pollution},"/",(absorb*1000000*60),"\n"})
+    end
+    setStyle(tile_table.add{type='label',caption=(absorption_caption)},{width=100,horizontal_align='center'})
     -- setStyle(tile_table.add{type='label',caption=(lua_tile.map_color.r..","..lua_tile.map_color.g..","..lua_tile.map_color.b)},{width=100,horizontal_align='center'})
     -- setStyle(tile_table.add{type='label',caption={"",'[color='..lua_tile.map_color.r..","..lua_tile.map_color.g..","..lua_tile.map_color.b..']',"■□",'[/color]'}},{horizontally_stretchable=true,horizontal_align='left'})
 
@@ -576,20 +593,25 @@ function collection_page(page_name, player_index, element)
     
     setStyle(collection_table.add{type='label',caption=lua_entity.type},{horizontally_stretchable=true,horizontal_align='center'})
     setStyle(collection_table.add{type='label',caption=lua_entity.mineable_properties.mining_time},{horizontally_stretchable=true,horizontal_align='center'})
-    setStyle(collection_table.add{type='label',caption=lua_entity.max_health},{horizontally_stretchable=true,horizontal_align='center'})
+    setStyle(collection_table.add{type='label',caption=lua_entity.get_max_health()},{horizontally_stretchable=true,horizontal_align='center'})
     -- setStyle(collection_table.add{type='label',caption=lua_entity.autoplace_specification and "O" or "X"},{horizontally_stretchable=true,horizontal_align='center'})
     
     
     local products_flow = setStyle(collection_table.add{type='flow'},{horizontally_stretchable=true,horizontal_align='center'})
     for _,product in pairs(lua_entity.mineable_properties.products or {}) do
       local info = makeProductInfo(
-        (product.type=="item" and game.item_prototypes[product.name] or game.fluid_prototypes[product.name]).localised_name, 
+        (product.type=="item" and prototypes.item[product.name] or prototypes.fluid[product.name]).localised_name, 
         product.probability, product.amount, product.amount_min, product.amount_max
       )
       local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=info.avg, tooltip = info.description,tags={[pre.."FNEI"]={type=product.type,value=product.name}}}
     end
 
-    setStyle(collection_table.add{type='label',caption=(lua_entity.emissions_per_second~=0) and lua_entity.emissions_per_second*-60 or ""},{horizontally_stretchable=true,horizontal_align='center'})
+    local absorption_caption={""}
+    for pollution, absorb in pairs(lua_entity.emissions_per_second) do
+        table.insert(absorption_caption,{"",{"airborne-pollutant-name."..pollution},"/",(absorb~=0) and (absorb*-60) or 0,"\n"})
+    end
+    --setStyle(collection_table.add{type='label',caption=(lua_entity.emissions_per_second~=0) and lua_entity.emissions_per_second*-60 or ""},{horizontally_stretchable=true,horizontal_align='center'})
+    setStyle(collection_table.add{type='label',caption=absorption_caption},{horizontally_stretchable=true,horizontal_align='center'})
   end
 
   local list   = {
@@ -597,7 +619,7 @@ function collection_page(page_name, player_index, element)
     fish              = {},
     ['simple-entity'] = {}
   }
-  for _,lua_entity in pairs(game.entity_prototypes) do
+  for _,lua_entity in pairs(prototypes.entity) do
     if (lua_entity.type=="tree" or lua_entity.type=="fish" or lua_entity.type=="simple-entity") and lua_entity.autoplace_specification then
       local target_list = list[lua_entity.type]
       table.insert(target_list,lua_entity)
@@ -635,11 +657,11 @@ function enemy_page(page_name, player_index, element)
     setStyle(enemy_table.add{type='label',caption=lua_entity.localised_name,tooltip={"",lua_entity.localised_name,"\n",lua_entity.name}},{horizontally_stretchable=true,horizontal_align='left'})
     
     setStyle(enemy_table.add{type='label',caption=lua_entity.type},{horizontally_stretchable=true,horizontal_align='center'})
-    setStyle(enemy_table.add{type='label',caption=lua_entity.max_health},{horizontally_stretchable=true,horizontal_align='center'})
+    setStyle(enemy_table.add{type='label',caption=lua_entity.get_max_health()},{horizontally_stretchable=true,horizontal_align='center'})
         
     local loots_flow = setStyle(enemy_table.add{type='flow'},{horizontally_stretchable=true,horizontal_align='center'})
     for _,loot in pairs(lua_entity.loot or {}) do
-      local info = makeProductInfo(game.item_prototypes[loot.item].localised_name, loot.probability, nil, loot.count_min, loot.count_max)
+      local info = makeProductInfo(prototypes.item[loot.item].localised_name, loot.probability, nil, loot.count_min, loot.count_max)
       local loot_button = loots_flow.add{type='sprite-button', sprite='item/'..loot.item, number=info.avg, tooltip = info.description, tags={[pre.."FNEI"]={type="item",value=loot.item}}}
     end
     local resistances_description = {"","[font=default-bold]",{"description.resistances"},"[/font]"}
@@ -649,38 +671,95 @@ function enemy_page(page_name, player_index, element)
       table.insert(sub_description," : [/font]"..v.decrease.."/"..math.floor(v.percent*100+0.5).."%")
       table.insert(resistances_description,sub_description)
     end
-    setStyle(enemy_table.add{type='sprite-button', sprite='utility/search_white',tooltip=resistances_description},{})
+    setStyle(enemy_table.add{type='sprite-button', sprite='utility/search',tooltip=resistances_description},{})
   end
 
   local list   = {
     unit              = {},
     turret            = {},
-    ['unit-spawner'] = {}
+    ['unit-spawner']  = {},
+    ['segmented-unit']= {},
+    ['spider-unit']   = {}
   }
-  for _,lua_entity in pairs(game.entity_prototypes) do
-    if lua_entity.type=="unit" or ((lua_entity.type=="turret" or lua_entity.type=="unit-spawner") and lua_entity.autoplace_specification) then
-      local target_list = list[lua_entity.type]
-      target_list[lua_entity.name]=lua_entity
-    end
-  end
-
-  --get spawned unit list
-  local spawn_unit = {}
-  for _,lua_entity in pairs(list["unit-spawner"]) do
-    for _,unit_spawn_def in pairs(lua_entity.result_units) do
-      spawn_unit[unit_spawn_def.unit]=true
-    end
-  end
-  --remove not spawned unit
-  for _,lua_entity in pairs(list["unit"]) do
-    if not spawn_unit[lua_entity.name]==true then
-      list["unit"][lua_entity.name] = nil
-    end
-  end
-
-  for _,target_list in pairs(list) do
-    for _,lua_entity in pairs(target_list) do
+  for _,lua_entity in pairs(prototypes.entity) do
+    --if lua_entity.type=="unit" or lua_entity.type=="segmented-unit" or ((lua_entity.type=="turret" or lua_entity.type=="unit-spawner") and lua_entity.autoplace_specification) then
+    if lua_entity.subgroup.name=="enemies" then
+      --local target_list = list[lua_entity.type]
+      --target_list[lua_entity.name]=lua_entity
       add_entity(lua_entity)      
     end
   end
+
+  ----get spawned unit list
+  --local spawn_unit = {}
+  --for _,lua_entity in pairs(list["unit-spawner"]) do
+  --  for _,unit_spawn_def in pairs(lua_entity.result_units) do
+  --    spawn_unit[unit_spawn_def.unit]=true
+  --  end
+  --end
+  ----remove not spawned unit
+  --for _,lua_entity in pairs(list["unit"]) do
+  --  if not spawn_unit[lua_entity.name]==true then
+  --    list["unit"][lua_entity.name] = nil
+  --  end
+  --end
+
+  --for _,target_list in pairs(list) do
+  --  for _,lua_entity in pairs(target_list) do
+  --    add_entity(lua_entity)      
+  --  end
+  --end
+end
+
+function spoil_page(page_name, player_index, element)  
+  local spoil_flow = element.add{type='flow',name=pre..'spoil_flow',direction='vertical'}
+
+  local spoil_table = spoil_flow.add{type='table',name=pre..'spoil_table',column_count=4,draw_vertical_lines=false,draw_horizontal_lines=true,draw_horizontal_line_after_headers=true}  
+  spoil_table.style.column_alignments[1] = "left"
+  spoil_table.style.column_alignments[2] = "left"
+  spoil_table.style.column_alignments[3] = "center"
+  --spoil_table.style.column_alignments[4] = "center"
+  spoil_table.style.column_alignments[4] = "center"
+  setStyle(spoil_table.add{type='label',caption=""                               },{          horizontal_align='left'    })
+  setStyle(spoil_table.add{type='label',caption={"tooltip-category.spoilable"    }},{width=100,horizontal_align='left'    })
+  setStyle(spoil_table.add{type='label',caption={"description.spoil-time"        }},{width=100,horizontal_align='center'  })
+  --setStyle(spoil_table.add{type='label',caption={pre.."category"                }},{width=100,horizontal_align='center'  })
+  setStyle(spoil_table.add{type='label',caption={"description.spoil-result"      }},{width=100,horizontal_align='center'  })
+
+
+
+  local items = get_item_proto()
+  for _,item in pairs(items) do 
+    local lua_item = prototypes.item[item.name]
+    local spoil_ticks = lua_item.get_spoil_ticks()
+    if spoil_ticks ~= 0 then
+    --if lua_item.spoil_result or lua_item.spoil_to_trigger_result  then
+      setStyle(spoil_table.add{type='choose-elem-button',elem_type='item',item=lua_item.name,tags={[pre.."FNEI"]=true}},{}).locked=true
+    -- setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
+      setStyle(spoil_table.add{type='label',caption=lua_item.localised_name,tooltip={"",lua_item.localised_name,"\n",lua_item.name}},{horizontally_stretchable=true,horizontal_align='left'})
+      setStyle(spoil_table.add{type='label',caption=(spoil_ticks/60).."s"}                                                                    ,{width=150,horizontal_align='center'})
+      if lua_item.spoil_result then  
+        setStyle(spoil_table.add{type='choose-elem-button',elem_type='item',item=lua_item.spoil_result.name,tags={[pre.."FNEI"]=true}},{}).locked=true    
+      elseif lua_item.spoil_to_trigger_result then
+        local trigger = lua_item.spoil_to_trigger_result.trigger[1]
+        local valid=false
+        if trigger.type=="direct" then
+          if trigger.action_delivery[1].type=="instant" then
+            if trigger.action_delivery[1].source_effects[1].type=="create-entity" then
+              local entity_name = trigger.action_delivery[1].source_effects[1].entity_name
+              setStyle(spoil_table.add{type='choose-elem-button',elem_type='entity',entity=entity_name},{}).locked=true    
+              valid=true
+            end
+          end
+        end
+        if not valid then
+            spoil_table.add{type='empty-widget'}
+        end
+      else
+        spoil_table.add{type='empty-widget'}
+      end
+    end
+  end
+
+
 end

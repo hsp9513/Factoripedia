@@ -18,7 +18,7 @@
 data.raw['gui-style'].default["filter_group_button_tab_yellow"]=
 {
   type = "button_style",
-  parent = "filter_group_button_tab",
+  --parent = "filter_group_button_tab",
 
   default_graphical_set =
   {

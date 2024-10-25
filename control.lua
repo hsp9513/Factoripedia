@@ -7,8 +7,8 @@ local pre_='factoripedia_'
 
 function reset()
   reset_proto()
-  global.gui={}
-  global.localised_string={}
+  storage.gui={}
+  storage.localised_string={}
 end
 
 script.on_init(function () 
@@ -32,11 +32,11 @@ script.on_event(defines.events.on_gui_click,function (event)
     if event.element.parent and event.element.parent.name==pre..'recipe_group_table' then
       for _,group_button in pairs(event.element.parent.children) do
         if group_button.type=='sprite-button' then
-          group_button.style='filter_group_button_tab'
+          --group_button.style='filter_group_tab' --TODO
           -- group_button.selected.state=false
         end
       end
-      event.element.style='filter_group_button_tab_yellow'
+      --event.element.style='filter_group_button_tab_yellow'--TODO
       event.element.parent.__target__.caption=event.element.name
       -- event.element.selected.state=true
 
@@ -50,9 +50,9 @@ script.on_event(defines.events.on_gui_click,function (event)
     end
     if event.element.name==pre..'module_filter_reset' then      
       local module_table=get_gui(event.player_index,pre..'module_table')
-      for _,module in pairs(get_modules()) do
-        if module_table[module.key].type=='switch' then
-          module_table[module.key].switch_state = 'none'
+      for _,effect in pairs(get_module_effects()) do
+        if module_table[effect.key].type=='switch' then
+          module_table[effect.key].switch_state = 'none'
         end
       end
       renderFilteredRecipe(event.player_index)
@@ -61,11 +61,11 @@ script.on_event(defines.events.on_gui_click,function (event)
     if event.element.parent and event.element.parent.name==pre..'item_group_table' then
       for _,group_button in pairs(event.element.parent.children) do
         if group_button.type=='sprite-button' then
-          group_button.style='filter_group_button_tab'
+          --group_button.style='filter_group_tab'--TODO
           -- group_button.selected.state=false
         end
       end
-      event.element.style='filter_group_button_tab_yellow'
+      --event.element.style='filter_group_button_tab_yellow'--TODO
       event.element.parent.__target__.caption=event.element.name
       -- event.element.selected.state=true
 
@@ -100,6 +100,26 @@ script.on_event(defines.events.on_gui_click,function (event)
       end
     end
 
+  end)
+  if not success then
+    reset()
+    game.print{"factoripedia.error_message"}
+    dbg(message,true)
+  end
+
+
+end)
+
+script.on_event(defines.events.on_gui_switch_state_changed,function (event)
+  local success,message = pcall(function ()
+    if event.element.name=='reset' then
+      reset()
+      game.print('factoripedia reset')
+    end
+    -- recipe page 
+    if event.element.tags[pre.."renderFilteredRecipe"]==true then
+      renderFilteredRecipe(event.player_index)
+    end
   end)
   if not success then
     reset()

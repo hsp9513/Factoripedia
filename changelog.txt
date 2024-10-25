@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2024-10-26
+  Changes:
+    - Factorio 2.0 supports
+    - Spoil tab added
+    - (Spoil tab) Spoilable item
+    - (Spoil tab) Spoil time
+    - (Spoil tab) Spoil result
+---------------------------------------------------------------------------------------------------
 Version: 0.0.9
 Date: 2022-07-03
   Changes:
