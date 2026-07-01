@@ -136,6 +136,7 @@ function get_item_proto()
       end    
     end
 
+    dbg("end get_item_proto",true)
   end
   return storage.proto.items
 end
@@ -278,6 +279,7 @@ function get_module_effects()
     end
 
     local effect_names = {"speed","consumption","productivity","pollution","quality"}
+    --local effect_names = {"speed","consumption","productivity","pollution"}
     for _,effect_name in pairs(effect_names) do
       --local lua_item = prototypes.item[item.name]
       --local module_key=lua_item.subgroup.name..'.'..lua_item.category

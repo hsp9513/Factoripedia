@@ -15,10 +15,10 @@
 --         time = 600
 --     }
 -- }})
-data.raw['gui-style'].default["filter_group_button_tab_yellow"]=
+data.raw['gui-style'].default["filter_group_button_tab_slightly_larger_yellow"]=
 {
   type = "button_style",
-  --parent = "filter_group_button_tab",
+  parent = "filter_group_button_tab_slightly_larger",
 
   default_graphical_set =
   {

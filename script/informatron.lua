@@ -81,11 +81,12 @@ function item_page(page_name, player_index, element)
   do          
     for _,group in pairs(prototypes.item_group) do
       if valid_group[group.name] then
-        local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
-        -- group_button.add{type="checkbox",name="selected",state=false}.visible=false
-        setStyle(group_button,{ vertically_stretchable=false, horizontally_stretchable=false  })
-        group_button.add{type="sprite",sprite='item-group/'..group.name}
-        setStyle(group_button.add{type="sprite",sprite='item-group/'..group.name},{ vertically_stretchable=true, horizontally_stretchable=true  })
+        local group_button=group_table.add{type='sprite-button',name=group.name,sprite='item-group/'..group.name ,style='filter_group_button_tab_slightly_larger',tooltip=group.localised_name}
+        --local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
+        ---- group_button.add{type="checkbox",name="selected",state=false}.visible=false
+        --setStyle(group_button,{ vertically_stretchable=false, horizontally_stretchable=false  })
+        --group_button.add{type="sprite",sprite='item-group/'..group.name}
+        --setStyle(group_button.add{type="sprite",sprite='item-group/'..group.name,resize_to_sprite=false },{ vertically_stretchable=true, horizontally_stretchable=true  })
       end
     end      
   end
@@ -142,6 +143,7 @@ function renderFilteredItem(player_index)
 end
 
 function recipe_page(page_name, player_index, element)
+  dbg("recipe_page",true)
   -- Make gorup table
   -- local valid_group = {}
   -- for _,recipe in pairs(get_recipe_proto()) do
@@ -155,9 +157,11 @@ function recipe_page(page_name, player_index, element)
   do          
     for groupkey,_ in pairs(get_recipe_groups()) do
       local group = prototypes.item_group[groupkey]
-      local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
-      -- group_button.add{type="checkbox",name="selected",state=false}.visible=false
-         group_button.add{type="sprite",sprite='item-group/'..group.name}
+      local group_button=group_table.add{type='sprite-button',name=group.name,sprite='item-group/'..group.name ,style='filter_group_button_tab_slightly_larger',tooltip=group.localised_name}
+      --local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
+      ---- group_button.add{type="checkbox",name="selected",state=false}.visible=false
+      ----group_button.add{type="sprite",sprite='item-group/'..group.name}
+      --group_button.add{type="sprite",sprite='item-group/'..group.name,resize_to_sprite=true}
 
     end      
   end
@@ -209,12 +213,12 @@ function recipe_page(page_name, player_index, element)
         module_label.tooltip=module_effect.tooltip
         if module_effect.enabled then
           module_table.add{
-            type="switch",name=module_effect.key,allow_none_state=true,switch_state="none",
+            type="switch",name=module_effect.key.."_elem",allow_none_state=true,switch_state="none",
             left_label_caption=" on",right_label_caption="off",
             tags = {[pre.."renderFilteredRecipe"]=true}
           }
         else
-          module_table.add{type="label", name=module_effect.key,caption="everything" ,tooltip={pre.."module_filter_everything"}} 
+          module_table.add{type="label", name=module_effect.key.."_elem",caption="everything" ,tooltip={pre.."module_filter_everything"}} 
         end
         module_table.style.column_alignments[#module_table.children]='center'
       end
@@ -244,16 +248,22 @@ function renderFilteredRecipe(player_index)
   local recipe_flow =get_gui(player_index,pre..'recipe_flow')
   recipe_flow.clear()
 
+  dbg("renderFilteredRecipe 1",true)
   local scope_state = filter_table[pre.."scope_switch"].switch_state
   local module_table_state={}
   for _,module_effect in pairs(get_module_effects()) do
-    if module_table[module_effect.key].type=='switch' then
-      module_table_state[module_effect.key] = module_table[module_effect.key].switch_state      
+    local gui_name = module_effect.key.."_elem"
+    dbg("module_effect : "..gui_name,true)
+    if module_table[gui_name].type=='switch' then
+      dbg("module_effect2: "..gui_name,true)
+      module_table_state[module_effect.key] = module_table[gui_name].switch_state      
     -- else
     --   module_table_state[module_effect.key] = nil
     end
+    dbg("module_effect0: "..module_effect.key,true)
   end
 
+  dbg("renderFilteredRecipe 2",true)
   local group_name = group_table.__target__.caption
   if group_name ~= "" then
     for subgroup_key,subgroup in pairs(get_groups()[group_name]) do

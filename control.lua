@@ -32,11 +32,11 @@ script.on_event(defines.events.on_gui_click,function (event)
     if event.element.parent and event.element.parent.name==pre..'recipe_group_table' then
       for _,group_button in pairs(event.element.parent.children) do
         if group_button.type=='sprite-button' then
-          --group_button.style='filter_group_tab' --TODO
+          group_button.style='filter_group_button_tab_slightly_larger'--TODO
           -- group_button.selected.state=false
         end
       end
-      --event.element.style='filter_group_button_tab_yellow'--TODO
+      event.element.style='filter_group_button_tab_slightly_larger_yellow'--TODO
       event.element.parent.__target__.caption=event.element.name
       -- event.element.selected.state=true
 
@@ -51,8 +51,9 @@ script.on_event(defines.events.on_gui_click,function (event)
     if event.element.name==pre..'module_filter_reset' then      
       local module_table=get_gui(event.player_index,pre..'module_table')
       for _,effect in pairs(get_module_effects()) do
-        if module_table[effect.key].type=='switch' then
-          module_table[effect.key].switch_state = 'none'
+        local gui_name = effect.key.."_elem"
+        if module_table[gui_name].type=='switch' then
+          module_table[gui_name].switch_state = 'none'
         end
       end
       renderFilteredRecipe(event.player_index)
@@ -61,11 +62,11 @@ script.on_event(defines.events.on_gui_click,function (event)
     if event.element.parent and event.element.parent.name==pre..'item_group_table' then
       for _,group_button in pairs(event.element.parent.children) do
         if group_button.type=='sprite-button' then
-          --group_button.style='filter_group_tab'--TODO
+          group_button.style='filter_group_button_tab_slightly_larger'--TODO
           -- group_button.selected.state=false
         end
       end
-      --event.element.style='filter_group_button_tab_yellow'--TODO
+      event.element.style='filter_group_button_tab_slightly_larger_yellow'--TODO
       event.element.parent.__target__.caption=event.element.name
       -- event.element.selected.state=true
 
