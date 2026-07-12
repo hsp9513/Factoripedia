@@ -1,3 +1,5 @@
+local pre ='factoripedia.'
+local pre_='factoripedia_'
 local special_type = {tree=true,fish=true,resource=true,["simple-entity"]=true,["rocket-launch"]=true}
 
 function reset_proto()
@@ -305,6 +307,24 @@ function get_module_effects()
   return storage.module_effects
 end
 
+function get_special_effects()
+    dbg("get_special_effects",true)
+    return {
+        {
+            key="self_return"  , caption={pre.."self_return"  },tooltip={pre.."self_return_tooltip"  },
+            filter=function(lua_recipe) 
+                return lua_recipe.ingredients[1].name == lua_recipe.products[1].name
+            end
+        },
+        {
+            key="single_return", caption={pre.."single_return"},tooltip={pre.."single_return_tooltip"},
+            filter=function(lua_recipe) 
+                return #lua_recipe.products == 1
+            end
+        },
+    }
+end
+
 function get_groups()
   dbg("get_groups",true)
   if not storage.groups then
@@ -318,7 +338,12 @@ function get_groups()
 
     for _,recipe in pairs(get_recipe_proto()) do
       local lua_recipe=prototypes.recipe[recipe.name]
-      storage.groups[lua_recipe.group.name][lua_recipe.subgroup.name].recipes[recipe.name]=true
+      if lua_recipe.has_category("recycling") then
+          local lua_item_ingredient = prototypes.item[lua_recipe.ingredients[1].name]
+          storage.groups[lua_item_ingredient.group.name][lua_item_ingredient.subgroup.name].recipes[recipe.name]=true
+      else  
+          storage.groups[lua_recipe.group.name][lua_recipe.subgroup.name].recipes[recipe.name]=true
+      end
     end
 
     for _,item in pairs(get_item_proto()) do

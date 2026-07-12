@@ -20,6 +20,8 @@ end)
 
 script.on_event(defines.events.on_gui_click,function (event)
   local success,message = pcall(function ()
+    dbg("on_gui_click "..event.element.name,true)
+    local player = game.players[event.player_index]
     if event.element.name=='reset' then
       reset()
       game.print('factoripedia reset')
@@ -29,34 +31,15 @@ script.on_event(defines.events.on_gui_click,function (event)
       game.print('run')
     end
     -- recipe page 
-    if event.element.parent and event.element.parent.name==pre..'recipe_group_table' then
-      for _,group_button in pairs(event.element.parent.children) do
-        if group_button.type=='sprite-button' then
-          group_button.style='filter_group_button_tab_slightly_larger'--TODO
-          -- group_button.selected.state=false
-        end
-      end
-      event.element.style='filter_group_button_tab_slightly_larger_yellow'--TODO
-      event.element.parent.__target__.caption=event.element.name
-      -- event.element.selected.state=true
-
-      renderFilteredRecipe(event.player_index)
-    end
-    if event.element.parent and event.element.parent.name==pre..'module_table' then
-      renderFilteredRecipe(event.player_index)
-    end
     if event.element.tags[pre.."renderFilteredRecipe"]==true then
-      renderFilteredRecipe(event.player_index)
+      dbg("on_gui_click renderFilteredRecipe",true)
+      --renderFilteredRecipe(event.player_index,event)
+      renderFilteredRecipe(event)
     end
-    if event.element.name==pre..'module_filter_reset' then      
-      local module_table=get_gui(event.player_index,pre..'module_table')
-      for _,effect in pairs(get_module_effects()) do
-        local gui_name = effect.key.."_elem"
-        if module_table[gui_name].type=='switch' then
-          module_table[gui_name].switch_state = 'none'
-        end
-      end
-      renderFilteredRecipe(event.player_index)
+    -- recycling page 
+    if event.element.tags[pre.."renderFilteredRecycling"]==true then
+      dbg("on_gui_click renderFilteredRecycling",true)
+      renderFilteredRecycling(event)
     end
     -- item page
     if event.element.parent and event.element.parent.name==pre..'item_group_table' then
@@ -73,31 +56,40 @@ script.on_event(defines.events.on_gui_click,function (event)
       renderFilteredItem(event.player_index)
     end
 
-    -- FNEI recipe remote call(show_recipe_for_prot)
-    if event.element.tags[pre.."FNEI"] then
+    ---- FNEI recipe remote call(show_recipe_for_prot)
+    --if event.element.tags[pre.."FNEI"] then
+    --  --game.print(event.element.name)
+    --  if script.active_mods.FNEI then
+    --    if event.element.type=="choose-elem-button" then
+    --      if event.button == defines.mouse_button_type.left then
+    --        remote.call("fnei", "show_recipe_for_prot", "craft", event.element.elem_type, event.element.elem_value)
+    --      else
+    --        remote.call("fnei", "show_recipe_for_prot", "usage", event.element.elem_type, event.element.elem_value)
+    --      end
+    --    elseif event.element.type=="sprite-button" then
+    --      if event.button == defines.mouse_button_type.left then
+    --        remote.call("fnei", "show_recipe_for_prot", "craft", event.element.tags[pre.."FNEI"].type, event.element.tags[pre.."FNEI"].value)
+    --      else
+    --        remote.call("fnei", "show_recipe_for_prot", "usage", event.element.tags[pre.."FNEI"].type, event.element.tags[pre.."FNEI"].value)
+    --      end
+    --    end
+    --  end
+    ---- FNEI recipe remote call(show_recipe)
+    --elseif event.element.tags[pre.."FNEI_recipe"] then
+    --  --game.print(event.element.name)
+    --  if script.active_mods.FNEI then
+    --    if event.element.type=="choose-elem-button" then
+    --      remote.call("fnei", "show_recipe", event.element.elem_value)
+    --    end
+    --  end
+    --end
+
+    -- Factoriopedia call
+    if event.element.tags[pre.."factoriopedia"] then
       --game.print(event.element.name)
-      if script.active_mods.FNEI then
-        if event.element.type=="choose-elem-button" then
-          if event.button == defines.mouse_button_type.left then
-            remote.call("fnei", "show_recipe_for_prot", "craft", event.element.elem_type, event.element.elem_value)
-          else
-            remote.call("fnei", "show_recipe_for_prot", "usage", event.element.elem_type, event.element.elem_value)
-          end
-        elseif event.element.type=="sprite-button" then
-          if event.button == defines.mouse_button_type.left then
-            remote.call("fnei", "show_recipe_for_prot", "craft", event.element.tags[pre.."FNEI"].type, event.element.tags[pre.."FNEI"].value)
-          else
-            remote.call("fnei", "show_recipe_for_prot", "usage", event.element.tags[pre.."FNEI"].type, event.element.tags[pre.."FNEI"].value)
-          end
-        end
-      end
-    -- FNEI recipe remote call(show_recipe)
-    elseif event.element.tags[pre.."FNEI_recipe"] then
-      --game.print(event.element.name)
-      if script.active_mods.FNEI then
-        if event.element.type=="choose-elem-button" then
-          remote.call("fnei", "show_recipe", event.element.elem_value)
-        end
+      if event.button == defines.mouse_button_type.left then
+        local factoriopedia = event.element.tags[pre.."factoriopedia"]
+        player.open_factoriopedia_gui(prototypes[factoriopedia.type][factoriopedia.name])
       end
     end
 
@@ -119,7 +111,11 @@ script.on_event(defines.events.on_gui_switch_state_changed,function (event)
     end
     -- recipe page 
     if event.element.tags[pre.."renderFilteredRecipe"]==true then
-      renderFilteredRecipe(event.player_index)
+      renderFilteredRecipe(event)
+    end
+    -- recycling page 
+    if event.element.tags[pre.."renderFilteredRecycling"]==true then
+      renderFilteredRecycling(event)
     end
   end)
   if not success then

@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2026-07-13
+  Changes:
+    - Factorio 2.1 supports
+    - Removed integration with FNEI.
+    - Added integration with Factoriopedia.
+    - Recycling tab added
+    - (Recycling tab) Original item return filter
+    - (Recycling tab) Single item type return filter
+---------------------------------------------------------------------------------------------------
 Version: 0.1.1
 Date: 2025-06-28
   Bugfixes:

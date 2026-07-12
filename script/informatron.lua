@@ -11,18 +11,35 @@ remote.add_interface('factoripedia', {
 })
 
 function factoripedia_menu(player_index)
-  return {
-    item=1,
-    -- fluid=1,
-    recipe=1,
-    -- tech=1,
-    fuel=1,
-    resource=1,
-    tile=1,
-    collection=1,
-    enemy=1,
-    spoil=1,
-  }
+    if script.active_mods["recycler"]  then
+        return {
+            item=1,
+            -- fluid=1,
+            recipe={
+                recycling = 1
+            },
+            -- tech=1,
+            fuel=1,
+            resource=1,
+            tile=1,
+            collection=1,
+            enemy=1,
+            spoil=1,
+        }
+    else 
+        return {
+            item=1,
+            -- fluid=1,
+            recipe=1,
+            -- tech=1,
+            fuel=1,
+            resource=1,
+            tile=1,
+            collection=1,
+            enemy=1,
+            spoil=1,
+        }
+    end
 end
 
 function factoripedia_page_content(page_name, player_index, element)
@@ -41,6 +58,9 @@ function factoripedia_page_content(page_name, player_index, element)
     if page_name == 'recipe' then
       recipe_page(page_name, player_index, element)
     end    
+    if page_name == 'recycling' then
+      recycling_page(page_name, player_index, element)
+    end
     if page_name == 'fuel' then
       fuel_page(page_name, player_index, element)
     end
@@ -134,7 +154,7 @@ function renderFilteredItem(player_index)
         -- item_button.locked=true
         item_button=subgroup_table.add{type='sprite-button',sprite='item/'..item.name,number=lua_item.stack_size}
         item_button.tooltip={"","[img=item/"..lua_item.name.."] ",lua_item.localised_name,"\n",lua_item.name}
-        item_button.tags={[pre.."FNEI"]={type="item",value=item.name}}
+        item_button.tags={[pre.."factoriopedia"]={type="item",name=item.name}}
         -- item_button.add{type="label",name="__name__",caption=item.name}.visible=false
         --item_button.add{type="label",name="__stack__",caption=lua_item.stack_size}
       end
@@ -157,7 +177,7 @@ function recipe_page(page_name, player_index, element)
   do          
     for groupkey,_ in pairs(get_recipe_groups()) do
       local group = prototypes.item_group[groupkey]
-      local group_button=group_table.add{type='sprite-button',name=group.name,sprite='item-group/'..group.name ,style='filter_group_button_tab_slightly_larger',tooltip=group.localised_name}
+      local group_button=group_table.add{type='sprite-button',name=group.name,sprite='item-group/'..group.name ,style='filter_group_button_tab_slightly_larger',tooltip=group.localised_name,tags={[pre.."renderFilteredRecipe"]=true}}
       --local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
       ---- group_button.add{type="checkbox",name="selected",state=false}.visible=false
       ----group_button.add{type="sprite",sprite='item-group/'..group.name}
@@ -198,9 +218,9 @@ function recipe_page(page_name, player_index, element)
     do -- module filter option
       local module_top=option_scroll.add{type='flow',name=pre..'module_top',direction='horizontal'}
       module_top.add{type='label',caption={pre..'module_filter'}}
-      setStyle(module_top.add{type='button',name=pre..'module_filter_reset',caption='reset'},{width=60,height=18})
+      setStyle(module_top.add{type='button',name=pre..'module_filter_reset',caption='reset',tags={[pre.."renderFilteredRecipe"]=true}},{width=60,height=18})
       local module_flow = option_scroll.add{type='flow',name=pre..'module_flow',direction='horizontal'}
-      local module_table = module_flow.add{type='table',name=pre..'module_table', caption="Module List",style='filter_slot_table',column_count=2}
+      local module_table = module_flow.add{type='table',name=pre..'module_table', caption="Module List",style='filter_slot_table',column_count=2,tags={[pre.."renderFilteredRecipe"]=true}}
       set_gui(player_index,pre..'module_table',module_table)
       --for _,module in pairs(get_modules()) do
       for _,module_effect in pairs(get_module_effects()) do
@@ -241,13 +261,37 @@ end
 
 
 
-function renderFilteredRecipe(player_index)
+function renderFilteredRecipe(event)
+  local player_index = event.player_index
   local group_table =get_gui(player_index,pre..'recipe_group_table')
   local filter_table=get_gui(player_index,pre..'filter_table')
   local module_table=get_gui(player_index,pre..'module_table')
   local recipe_flow =get_gui(player_index,pre..'recipe_flow')
   recipe_flow.clear()
+  -- pre gui processing
+  if event.element.parent and event.element.parent.name==pre..'recipe_group_table' then
+    for _,group_button in pairs(event.element.parent.children) do
+      if group_button.type=='sprite-button' then
+        group_button.style='filter_group_button_tab_slightly_larger'--TODO
+      end
+    end
+    event.element.style='filter_group_button_tab_slightly_larger_yellow'--TODO
+    event.element.parent.__target__.caption=event.element.name --TODO
+  
+    --renderFilteredRecipe(event.player_index)
+  end
+  if event.element.name==pre..'module_filter_reset' then      
+    local module_table=get_gui(event.player_index,pre..'module_table')
+    for _,effect in pairs(get_module_effects()) do
+      local gui_name = effect.key.."_elem"
+      if module_table[gui_name].type=='switch' then
+        module_table[gui_name].switch_state = 'none'
+      end
+    end
+    --renderFilteredRecipe(event.player_index)
+  end
 
+  -- rendering item
   dbg("renderFilteredRecipe 1",true)
   local scope_state = filter_table[pre.."scope_switch"].switch_state
   local module_table_state={}
@@ -274,6 +318,11 @@ function renderFilteredRecipe(player_index)
         --local lua_recipe=prototypes.recipe[recipe.name]
         local lua_recipe=prototypes.recipe[recipe.name]
         local valid=true
+        if lua_recipe.has_category("recycling") and lua_recipe.hidden then 
+            -- scrap-recycling recipe is not hidden
+            --game.print(lua_recipe.name)
+            goto continue
+        end
         for _,module_effect in pairs(get_module_effects()) do
           if module_table_state[module_effect.key] ~=nil then
             local state=module_table_state[module_effect.key]
@@ -293,7 +342,8 @@ function renderFilteredRecipe(player_index)
           recipe_button=subgroup_table.add{type='choose-elem-button',elem_type="recipe",recipe=recipe.name}
         end
         recipe_button.locked=true
-        recipe_button.tags={[pre.."FNEI_recipe"]=true}
+        recipe_button.tags={[pre.."factoriopedia"]={type="recipe",name=recipe.name}}
+        ::continue::
       end
       if subgroup_valid==false and scope_state=='right' then
         subgroup_table.visible = false
@@ -302,6 +352,179 @@ function renderFilteredRecipe(player_index)
   end
 end
 
+function recycling_page(page_name, player_index, element)
+  dbg("recycling_page",true)
+  -- Make gorup table
+  -- local valid_group = {}
+  -- for _,recipe in pairs(get_recipe_proto()) do
+  --   local lua_recipe = prototypes.recipe[recipe.name]
+  --   valid_group[lua_recipe.group.name] = true
+  -- end
+  --local group_table = element.add{type='table',name=pre..'recipe_group_table',style='filter_group_table',column_count=12}
+  local group_table = element.add{type='table',name=pre..'recycling_group_table',column_count=12}
+  set_gui(player_index,pre..'recycling_group_table',group_table)
+  group_table.add{type="label",name="__target__",caption=""}.visible=false
+  do          
+    for groupkey,_ in pairs(get_recipe_groups()) do
+      local group = prototypes.item_group[groupkey]
+      local group_button=group_table.add{type='sprite-button',name=group.name,sprite='item-group/'..group.name ,style='filter_group_button_tab_slightly_larger',tooltip=group.localised_name,tags = {[pre.."renderFilteredRecycling"]=true}}
+      --local group_button=group_table.add{type='tab',name=group.name,sprite='item-group/'..group.name ,style='filter_group_slot_tab',tooltip=group.localised_name}
+      ---- group_button.add{type="checkbox",name="selected",state=false}.visible=false
+      ----group_button.add{type="sprite",sprite='item-group/'..group.name}
+      --group_button.add{type="sprite",sprite='item-group/'..group.name,resize_to_sprite=true}
+
+    end      
+  end
+  
+  -- Make content
+  local content_flow = element.add{type='flow',name=pre..'content_flow',direction='horizontal'}
+  do
+    local option_frame = content_flow.add{type='frame',name=pre..'option_frame',direction='vertical'}
+    option_frame.style.vertically_stretchable=true
+    local option_scroll = option_frame.add{type='scroll-pane',name=pre..'option_scroll',direction='vertical'}
+    option_scroll.style.vertically_stretchable=true
+    option_scroll.vertical_scroll_policy='always'
+    do -- general filter option
+      option_scroll.add{type='label',caption={pre..'general_filter'}}
+      local recycling_filter_flow  = option_scroll.add{type='flow',name=pre..'recycling_filter_flow',direction='horizontal'}
+      local recycling_filter_table = recycling_filter_flow.add{type='table',name=pre..'recycling_filter_table', caption="Filter List",style='filter_slot_table',column_count=2}
+      set_gui(player_index,pre..'recycling_filter_table',recycling_filter_table)
+
+      recycling_filter_table.add{type="label",name='scope_label',caption="scope_label  ", visible=false }
+      recycling_filter_table.add{
+        type="switch",name=pre.."scope_switch",allow_none_state=false,switch_state="left",
+        left_label_caption="all",right_label_caption="related",
+        left_label_tooltip={pre.."recipe_filter_all"},right_label_tooltip={pre.."recipe_filter_related"},
+        tags = {[pre.."renderFilteredRecycling"]=true}
+      }
+    end
+    do -- special recycling recipe filter option
+      local special_top=option_scroll.add{type='flow',name=pre..'special_top',direction='horizontal'}
+      special_top.add{type='label',caption={pre..'special_filter'}}
+      setStyle(special_top.add{type='button',name=pre..'special_filter_reset',caption='reset',tags={[pre.."renderFilteredRecycling"]=true}},{width=60,height=18})
+      local special_flow = option_scroll.add{type='flow',name=pre..'special_flow',direction='horizontal'}
+      local special_table = special_flow.add{type='table',name=pre..'special_table', caption="Special List",style='filter_slot_table',column_count=2}
+      set_gui(player_index,pre..'special_table',special_table)
+
+      for _,special_effect in pairs(get_special_effects()) do
+        local special_label = special_table.add{type="label",name=special_effect.key..'_label',caption="" }
+        special_label.caption=special_effect.caption
+        special_label.tooltip=special_effect.tooltip
+
+        special_table.add{
+          type="switch",name=special_effect.key.."_elem",allow_none_state=true,switch_state="none",
+          left_label_caption=" on",right_label_caption="off",
+          tags = {[pre.."renderFilteredRecycling"]=true}
+        }
+        special_table.style.column_alignments[#special_table.children]='center'
+      end
+    end
+    local recycling_frame = content_flow.add{type='frame',name=pre..'recycling_frame',direction='vertical'}
+    recycling_frame.style.vertically_stretchable=true
+    recycling_frame.style.horizontally_stretchable=true
+    do
+      local recycling_scroll = recycling_frame.add{type='scroll-pane',name=pre..'recycling_scroll',direction='vertical'}
+      recycling_scroll.style.vertically_stretchable=true
+      recycling_scroll.style.horizontally_stretchable=true
+      recycling_scroll.vertical_scroll_policy='always'
+      
+      local recycling_flow = recycling_scroll.add{type='flow', name=pre..'recycling_flow', caption='Recipe List',style='vertical_flow',direction="vertical"}
+      recycling_flow.style.vertical_spacing=0
+      set_gui(player_index,pre..'recycling_flow',recycling_flow)
+    end
+  end
+end
+
+
+
+function renderFilteredRecycling(event)
+  local player_index = event.player_index
+  local group_table           =get_gui(player_index,pre..'recycling_group_table')
+  local recycling_filter_table=get_gui(player_index,pre..'recycling_filter_table')
+  local special_table         =get_gui(player_index,pre..'special_table')
+  local recycling_flow        =get_gui(player_index,pre..'recycling_flow')
+  recycling_flow.clear()
+
+  -- pre gui processing
+  if event.element.parent and event.element.parent.name==pre..'recycling_group_table' then
+    for _,group_button in pairs(event.element.parent.children) do
+      if group_button.type=='sprite-button' then
+        group_button.style='filter_group_button_tab_slightly_larger'--TODO
+        -- group_button.selected.state=false
+      end
+    end
+    event.element.style='filter_group_button_tab_slightly_larger_yellow'--TODO
+    event.element.parent.__target__.caption=event.element.name
+  end
+  if event.element.name==pre..'special_filter_reset' then      
+    local special_table=get_gui(event.player_index,pre..'special_table')
+    for _,effect in pairs(get_special_effects()) do
+      local gui_name = effect.key.."_elem"
+      if special_table[gui_name].type=='switch' then
+        special_table[gui_name].switch_state = 'none'
+      end
+    end
+  end
+
+  -- rendering item
+  dbg("renderFilteredRecycling 1",true)
+  local scope_state = recycling_filter_table[pre.."scope_switch"].switch_state
+  local special_table_state={}
+  for _,special_effect in pairs(get_special_effects()) do
+    local gui_name = special_effect.key.."_elem"
+    dbg("special_effect : "..gui_name,true)
+    if special_table[gui_name].type=='switch' then
+      dbg("special_effect2: "..gui_name,true)
+      special_table_state[special_effect.key] = special_table[gui_name].switch_state      
+    end
+    dbg("special_effect0: "..special_effect.key,true)
+  end
+
+  dbg("renderFilteredRecycling 2",true)
+  local group_name = group_table.__target__.caption
+  if group_name ~= "" then
+    for subgroup_key,subgroup in pairs(get_groups()[group_name]) do
+      local subgroup_valid = false
+      local subgroup_table = recycling_flow.add{type="table", name=subgroup_key,style='filter_slot_table',column_count=14}
+      for recipe_key,_ in pairs(get_groups()[group_name][subgroup_key].recipes) do
+        local recipe=get_recipe_proto()[recipe_key]
+        --local lua_recipe=prototypes.recipe[recipe.name]
+        local lua_recipe=prototypes.recipe[recipe.name]
+        local valid=true
+        if not(lua_recipe.has_category("recycling") and lua_recipe.hidden) then 
+            -- scrap-recycling recipe is not hidden
+            --game.print(lua_recipe.name)
+            goto continue
+        end
+
+        for _,special_effect in pairs(get_special_effects()) do
+          if special_table_state[special_effect.key] ~=nil then
+            local state=special_table_state[special_effect.key]
+            if state=='left' then
+              if special_effect.filter(lua_recipe) ~= true then valid=false break end
+            elseif state=='right' then
+              if special_effect.filter(lua_recipe) == true then valid=false break end
+            end
+          end
+        end
+
+        local recipe_button
+        if valid==true then
+          recipe_button=subgroup_table.add{type='choose-elem-button',elem_type="recipe",recipe=recipe.name,style='yellow_slot_button'}
+          subgroup_valid=true
+        else
+          recipe_button=subgroup_table.add{type='choose-elem-button',elem_type="recipe",recipe=recipe.name}
+        end
+        recipe_button.locked=true
+        recipe_button.tags={[pre.."factoriopedia"]={type="recipe",name=recipe.name}}
+        ::continue::
+      end
+      if subgroup_valid==false and scope_state=='right' then
+        subgroup_table.visible = false
+      end
+    end  
+  end
+end
 
 -- function fuel_old_page(page_name, player_index, element)  
 --   local fuel_flow = element.add{type='flow',name=pre..'fuel_flow',direction='vertical'}
@@ -398,16 +621,17 @@ function fuel_page(page_name, player_index, element)
 
   for _,category in pairs(fuel_item_category) do
     for _,lua_item in pairs(category) do
-      setStyle(fuel_table.add{type='choose-elem-button',elem_type='item',item=lua_item.name,tags={[pre.."FNEI"]=true}},{}).locked=true
+      local lua_fuel = prototypes.fuel_category[lua_item.fuel_category]
+      setStyle(fuel_table.add{type='choose-elem-button',elem_type='item',item=lua_item.name,tags={[pre.."factoriopedia"]={type="item",name=lua_item.name}}},{}).locked=true
     -- setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
       setStyle(fuel_table.add{type='label',caption=lua_item.localised_name,tooltip={"",lua_item.localised_name,"\n",lua_item.name}},{horizontally_stretchable=true,horizontal_align='left'})
-      setStyle(fuel_table.add{type='label',caption=SI(lua_item.fuel_value)..'J '}                                 ,{width=100,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption=lua_item.fuel_category}                                        ,{width=150,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption=(lua_item.fuel_emissions_multiplier*100)..'%'}                 ,{width=100,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption=(lua_item.fuel_acceleration_multiplier*100)..'%'}              ,{width=100,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption=(lua_item.fuel_top_speed_multiplier*100)..'%'}                 ,{width=100,horizontal_align='center'})    
+      setStyle(fuel_table.add{type='label',caption=SI(lua_item.fuel_value)..'J '}                                                  ,{width=100,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption=lua_fuel.localised_name,tooltip={"",lua_fuel.localised_name,"\n",lua_fuel.name}},{width=150,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption=(lua_item.fuel_emissions_multiplier*100)..'%'}                                  ,{width=100,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption=(lua_item.fuel_acceleration_multiplier*100)..'%'}                               ,{width=100,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption=(lua_item.fuel_top_speed_multiplier*100)..'%'}                                  ,{width=100,horizontal_align='center'})    
       if lua_item.burnt_result then  
-        setStyle(fuel_table.add{type='choose-elem-button',elem_type='item',item=lua_item.burnt_result.name,tags={[pre.."FNEI"]=true}},{}).locked=true    
+        setStyle(fuel_table.add{type='choose-elem-button',elem_type='item',item=lua_item.burnt_result.name,tags={[pre.."factoriopedia"]={type="item",name=lua_item.burnt_result.name}}},{}).locked=true    
       else
         fuel_table.add{type='empty-widget'}
       end
@@ -418,14 +642,14 @@ function fuel_page(page_name, player_index, element)
   for _,fluid in pairs(fluids) do 
     local lua_fluid = prototypes.fluid[fluid.name]
     if lua_fluid.fuel_value>0 then
-      setStyle(fuel_table.add{type='choose-elem-button',elem_type='fluid',fluid=lua_fluid.name,tags={[pre.."FNEI"]=true}},{}).locked=true
+      setStyle(fuel_table.add{type='choose-elem-button',elem_type='fluid',fluid=lua_fluid.name,tags={[pre.."factoriopedia"]={type="fluid",name=lua_fluid.name}}},{}).locked=true
     -- setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
       setStyle(fuel_table.add{type='label',caption=lua_fluid.localised_name,tooltip={"",lua_fluid.localised_name,"\n",lua_fluid.name}},{horizontally_stretchable=true,horizontal_align='left'})
-      setStyle(fuel_table.add{type='label',caption=SI(lua_fluid.fuel_value)..'J '}                                 ,{width=100,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption='fluid'                }                                        ,{width=150,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption=(lua_fluid.emissions_multiplier*100)..'%'}                 ,{width=100,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption='N/A'                                         }                 ,{width=100,horizontal_align='center'})
-      setStyle(fuel_table.add{type='label',caption='N/A'                                         }                 ,{width=100,horizontal_align='center'})    
+      setStyle(fuel_table.add{type='label',caption=SI(lua_fluid.fuel_value)..'J '}                                                    ,{width=100,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption={'tooltip-category.fluid'},tooltip={"",{'tooltip-category.fluid'},"\n","fluid"   }},{width=150,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption=(lua_fluid.emissions_multiplier*100)..'%'                                         },{width=100,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption='N/A'                                                                             },{width=100,horizontal_align='center'})
+      setStyle(fuel_table.add{type='label',caption='N/A'                                                                             },{width=100,horizontal_align='center'})    
       fuel_table.add{type='empty-widget'}
       
     end
@@ -456,7 +680,7 @@ function resource_page(page_name, player_index, element)
 
   for resource,_ in pairs(storage.item_special_type['resource']) do
     local lua_entity = prototypes.entity[resource]
-    setStyle(resource_table.add{type='choose-elem-button',elem_type='entity',entity=lua_entity.name},{}).locked=true
+    setStyle(resource_table.add{type='choose-elem-button',elem_type='entity',entity=lua_entity.name,tags={[pre.."factoriopedia"]={type="entity",name=lua_entity.name}}},{}).locked=true
     -- setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
     setStyle(resource_table.add{type='label',caption=lua_entity.localised_name,tooltip={"",lua_entity.localised_name,"\n",lua_entity.name}},{horizontally_stretchable=true,horizontal_align='left'})
     
@@ -465,18 +689,19 @@ function resource_page(page_name, player_index, element)
     for _,product in pairs(lua_entity.mineable_properties.products) do
       local info = makeProductInfo(
         (product.type=="item" and prototypes.item[product.name] or prototypes.fluid[product.name]).localised_name, 
-        product.probability, product.amount, product.amount_min, product.amount_max
+        product.independent_probability,product.shared_probability, product.amount, product.amount_min, product.amount_max
       )
       -- local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=amount, tooltip = {"",(product.type=="item" and prototypes.item[product.name] or prototypes.fluid[product.name]).localised_name," ",amount}}
       local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=info.avg, tooltip = info.description,
-                                               tags={[pre.."FNEI"]={type=product.type,value=product.name}}}
+                                               tags={[pre.."factoriopedia"]={type=product.type,name=product.name}}}
     end
     local setting = surface.map_gen_settings.autoplace_controls[lua_entity.name]
     setStyle(resource_table.add{type='label',caption=(setting and setting.frequency~=0) and "O" or "X"},{horizontally_stretchable=true,horizontal_align='center'})
     if(lua_entity.mineable_properties.required_fluid ) then
       local mineable_properties = lua_entity.mineable_properties
       local fluid_button = setStyle(resource_table.add{type='sprite-button', sprite="fluid/"..mineable_properties.required_fluid, number=mineable_properties.fluid_amount,
-                                                       tooltip=prototypes.fluid[mineable_properties.required_fluid].localised_name,tags={[pre.."FNEI"]={type="fluid",value=mineable_properties.required_fluid} }},
+                                                       tooltip=prototypes.fluid[mineable_properties.required_fluid].localised_name,
+                                                       tags={[pre.."factoriopedia"]={type="fluid",name=mineable_properties.required_fluid} }},
                                    {horizontal_align='center'})
     else
       resource_table.add{type='empty-widget'}
@@ -511,7 +736,7 @@ function tile_page(page_name, player_index, element)
 
   for _,lua_tile in pairs(prototypes.tile) do
     -- local lua_entity = prototypes.entity[resource]
-    setStyle(tile_table.add{type='choose-elem-button',elem_type='tile',tile=lua_tile.name},{}).locked=true
+    setStyle(tile_table.add{type='choose-elem-button',elem_type='tile',tile=lua_tile.name,tags={[pre.."factoriopedia"]={type="tile",name=lua_tile.name}}},{}).locked=true
     -- setStyle(tile_table.add{type='sprite-button', sprite='tile/'..lua_tile.name,tooltip=colorText(lua_tile.map_color,lua_tile.localised_name)},{})
     
     
@@ -525,7 +750,7 @@ function tile_page(page_name, player_index, element)
       for _,item in pairs(lua_tile.items_to_place_this) do       
         if items[item.name] then
           -- setStyle(tile_table.add{type='label',caption=item.name},{horizontally_stretchable=true,horizontal_align='center'})
-          local cratable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=item.name,caption=item.name,tags={[pre.."FNEI"]=true}},{horizontally_stretchable=true,horizontal_align='center'})
+          local cratable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=item.name,caption=item.name,tags={[pre.."factoriopedia"]={type="item",name=item.name}}},{horizontally_stretchable=true,horizontal_align='center'})
           cratable_button.locked=true  
           craftable = true
           break
@@ -539,7 +764,7 @@ function tile_page(page_name, player_index, element)
     if lua_tile.mineable_properties.minable then      
       local product = (lua_tile.mineable_properties.products or {})[1] 
       if product then
-        local mineable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=product.name,caption="",tags={[pre.."FNEI"]=true}},{horizontally_stretchable=true,horizontal_align='center'})
+        local mineable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",item=product.name,caption="",tags={[pre.."factoriopedia"]={type="item",name=product.name}}},{horizontally_stretchable=true,horizontal_align='center'})
         mineable_button.locked=true
       else        
         local mineable_button = setStyle(tile_table.add{type='choose-elem-button',elem_type="item",tooltip={pre.."tile_without_product"}},{horizontally_stretchable=true,horizontal_align='center'})
@@ -551,7 +776,7 @@ function tile_page(page_name, player_index, element)
     -- setStyle(tile_table.add{type='label',caption=lua_tile.mineable_properties.minable and "O" or "X"},{horizontally_stretchable=true,horizontal_align='center'})
     
     if lua_tile.autoplace_specification then
-      setStyle(tile_table.add{type='sprite-button', sprite='tile/'..lua_tile.name,tooltip=colorText(lua_tile.map_color,lua_tile.localised_name)},{})
+      setStyle(tile_table.add{type='sprite-button', sprite='tile/'..lua_tile.name,tooltip=colorText(lua_tile.map_color,lua_tile.localised_name),tags={[pre.."factoriopedia"]={type="tile",name=lua_tile.name}}},{})
     else
       setStyle(tile_table.add{type='label',caption=""},{horizontally_stretchable=true,horizontal_align='center'})
     end
@@ -564,9 +789,14 @@ function tile_page(page_name, player_index, element)
     ----emissions_per_second->absorptions_per_second
     local absorption_caption={""}
     for pollution, absorb in pairs(lua_tile.absorptions_per_second) do
-        table.insert(absorption_caption,{"",{"airborne-pollutant-name."..pollution},"/",(absorb*1000000*60),"\n"})
+      if absorb~=0 then
+        if #absorption_caption ~= 1 then
+          table.insert(absorption_caption,"\n")
+        end
+        table.insert(absorption_caption,{"",{"airborne-pollutant-name."..pollution},"/",(absorb*1000000*60)})
+      end
     end
-    setStyle(tile_table.add{type='label',caption=(absorption_caption)},{width=100,horizontal_align='center'})
+    setStyle(tile_table.add{type='label',caption=absorption_caption},{width=100,horizontal_align='center'})
     -- setStyle(tile_table.add{type='label',caption=(lua_tile.map_color.r..","..lua_tile.map_color.g..","..lua_tile.map_color.b)},{width=100,horizontal_align='center'})
     -- setStyle(tile_table.add{type='label',caption={"",'[color='..lua_tile.map_color.r..","..lua_tile.map_color.g..","..lua_tile.map_color.b..']',"■□",'[/color]'}},{horizontally_stretchable=true,horizontal_align='left'})
 
@@ -597,7 +827,7 @@ function collection_page(page_name, player_index, element)
 
   function add_entity(lua_entity)
     
-    setStyle(collection_table.add{type='choose-elem-button',elem_type="entity",entity=lua_entity.name},{}).locked=true
+    setStyle(collection_table.add{type='choose-elem-button',elem_type="entity",entity=lua_entity.name,tags={[pre.."factoriopedia"]={type="entity",name=lua_entity.name}}},{}).locked=true
     -- setStyle(collection_table.add{type='sprite-button', sprite='entity/'..lua_entity.name,tooltip=colorText(lua_entity.map_color,lua_entity.localised_name)},{})
     setStyle(collection_table.add{type='label',caption=lua_entity.localised_name,tooltip={"",lua_entity.localised_name,"\n",lua_entity.name}},{horizontally_stretchable=true,horizontal_align='left'})
     
@@ -611,15 +841,22 @@ function collection_page(page_name, player_index, element)
     for _,product in pairs(lua_entity.mineable_properties.products or {}) do
       local info = makeProductInfo(
         (product.type=="item" and prototypes.item[product.name] or prototypes.fluid[product.name]).localised_name, 
-        product.probability, product.amount, product.amount_min, product.amount_max
+        product.independent_probability,product.shared_probability, product.amount, product.amount_min, product.amount_max
       )
-      local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=info.avg, tooltip = info.description,tags={[pre.."FNEI"]={type=product.type,value=product.name}}}
+      local product_button = products_flow.add{type='sprite-button', sprite=product.type..'/'..product.name, number=info.avg, tooltip = info.description,tags={[pre.."factoriopedia"]={type=product.type,name=product.name}}}
     end
 
     local absorption_caption={""}
     for pollution, absorb in pairs(lua_entity.emissions_per_second) do
+      --game.print(pollution.." ".. absorb)
+      if absorb~=0 then
+        if #absorption_caption ~= 1 then
+          table.insert(absorption_caption,"\n")
+        end
         table.insert(absorption_caption,{"",{"airborne-pollutant-name."..pollution},"/",(absorb~=0) and (absorb*-60) or 0,"\n"})
+      end
     end
+
     --setStyle(collection_table.add{type='label',caption=(lua_entity.emissions_per_second~=0) and lua_entity.emissions_per_second*-60 or ""},{horizontally_stretchable=true,horizontal_align='center'})
     setStyle(collection_table.add{type='label',caption=absorption_caption},{horizontally_stretchable=true,horizontal_align='center'})
   end
@@ -662,7 +899,7 @@ function enemy_page(page_name, player_index, element)
 
   function add_entity(lua_entity)
     -- setStyle(enemy_table.add{type='sprite-button', sprite='entity/'..lua_entity.name,tooltip=colorText(lua_entity.map_color,lua_entity.localised_name)},{})
-    setStyle(enemy_table.add{type='choose-elem-button',elem_type="entity",entity=lua_entity.name},{}).locked=true
+    setStyle(enemy_table.add{type='choose-elem-button',elem_type="entity",entity=lua_entity.name,tags={[pre.."factoriopedia"]={type="entity",name=lua_entity.name}}},{}).locked=true
     
     setStyle(enemy_table.add{type='label',caption=lua_entity.localised_name,tooltip={"",lua_entity.localised_name,"\n",lua_entity.name}},{horizontally_stretchable=true,horizontal_align='left'})
     
@@ -671,8 +908,8 @@ function enemy_page(page_name, player_index, element)
         
     local loots_flow = setStyle(enemy_table.add{type='flow'},{horizontally_stretchable=true,horizontal_align='center'})
     for _,loot in pairs(lua_entity.loot or {}) do
-      local info = makeProductInfo(prototypes.item[loot.item].localised_name, loot.probability, nil, loot.count_min, loot.count_max)
-      local loot_button = loots_flow.add{type='sprite-button', sprite='item/'..loot.item, number=info.avg, tooltip = info.description, tags={[pre.."FNEI"]={type="item",value=loot.item}}}
+      local info = makeProductInfo(prototypes.item[loot.name].localised_name, loot.independent_probability, loot.shared_probability, loot.amount, loot.amount_min, loot.amount_max)
+      local loot_button = loots_flow.add{type='sprite-button', sprite='item/'..loot.name, number=info.avg, tooltip = info.description, tags={[pre.."factoriopedia"]={type="item",name=loot.name}}}
     end
     local resistances_description = {"","[font=default-bold]",{"description.resistances"},"[/font]"}
     for k,v in pairs(lua_entity.resistances or {}) do
@@ -744,12 +981,12 @@ function spoil_page(page_name, player_index, element)
     local spoil_ticks = lua_item.get_spoil_ticks()
     if spoil_ticks ~= 0 then
     --if lua_item.spoil_result or lua_item.spoil_to_trigger_result  then
-      setStyle(spoil_table.add{type='choose-elem-button',elem_type='item',item=lua_item.name,tags={[pre.."FNEI"]=true}},{}).locked=true
+      setStyle(spoil_table.add{type='choose-elem-button',elem_type='item',item=lua_item.name,tags={[pre.."factoriopedia"]={type="item",name=lua_item.name}}},{}).locked=true
     -- setStyle(resource_table.add{type='label',caption=lua_entity.localised_name},{horizontally_stretchable=true,horizontal_align='left'})
       setStyle(spoil_table.add{type='label',caption=lua_item.localised_name,tooltip={"",lua_item.localised_name,"\n",lua_item.name}},{horizontally_stretchable=true,horizontal_align='left'})
       setStyle(spoil_table.add{type='label',caption=(spoil_ticks/60).."s"}                                                                    ,{width=150,horizontal_align='center'})
       if lua_item.spoil_result then  
-        setStyle(spoil_table.add{type='choose-elem-button',elem_type='item',item=lua_item.spoil_result.name,tags={[pre.."FNEI"]=true}},{}).locked=true    
+        setStyle(spoil_table.add{type='choose-elem-button',elem_type='item',item=lua_item.spoil_result.name,tags={[pre.."factoriopedia"]={type="item",name=lua_item.spoil_result.name}}},{}).locked=true    
       elseif lua_item.spoil_to_trigger_result then
         local trigger = lua_item.spoil_to_trigger_result.trigger[1]
         local valid=false
@@ -757,7 +994,7 @@ function spoil_page(page_name, player_index, element)
           if trigger.action_delivery[1].type=="instant" then
             if trigger.action_delivery[1].source_effects[1].type=="create-entity" then
               local entity_name = trigger.action_delivery[1].source_effects[1].entity_name
-              setStyle(spoil_table.add{type='choose-elem-button',elem_type='entity',entity=entity_name},{}).locked=true    
+              setStyle(spoil_table.add{type='choose-elem-button',elem_type='entity',entity=entity_name,tags={[pre.."factoriopedia"]={type="entity",name=entity_name}}},{}).locked=true    
               valid=true
             end
           end

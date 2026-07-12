@@ -42,8 +42,11 @@ function setStyle(element, styles)
   return element
 end
 
-function makeProductInfo(localised_name, probability, amount, min, max)
-  probability = probability~=nil and probability or 1
+function makeProductInfo(localised_name, independent, shared, amount, min, max)
+  independent = independent~=nil and independent or 1
+  shared      = shared     ~=nil and (shared.max-shared.min) or 1
+  local probability = independent * shared
+
   local description = {""}
   table.insert(description,"[font=default-bold]")
   if probability~=1 then table.insert(description, (probability*100).."% ") end
@@ -85,3 +88,14 @@ function get_localised_string(player_index,key)
   return storage.localised_string[player_index] and storage.localised_string[player_index][key]
 end
 
+
+function insert_between(src,value)
+  local dst = {}
+  for i, v in ipairs(src) do
+    if i > 1 then
+      dst[#dst + 1] = value
+    end
+    dst[#dst + 1] = v
+  end
+  return dst
+end

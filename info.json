@@ -1,13 +1,13 @@
 {
 	"name": "factoripedia",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"title": "Factoripedia",
 	"author": "hsp9513",
 	"dependencies": [
-    	"base >= 2.0.0",
+    	"base >= 2.1.0",
 		"informatron >= 0.4.0"
 	],
-	"description": "This mod is currently under development.\n\nImplemented features\n1. Filtering on availability of module by recipe\n2. Information about items stack\n3. Information about fuels, resources, tiles, collections, and enemies\n\nFunction to be implemented\n1. Information about players",
-	"factorio_version": "2.0",
+	"description": "This mod allows you to collect and view information related to your game.\nThis mod is based on the informatron mod.\n\nImplemented features\n1. Filtering on availability of module by recipe\n2. Information about items stack\n3. Information about fuels, resources, tiles, collections, enemies, and spoil.",
+	"factorio_version": "2.1",
 	"homepage":""
 }
